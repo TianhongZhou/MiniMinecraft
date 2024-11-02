@@ -8,6 +8,10 @@ private:
     glm::vec3 m_velocity, m_acceleration;
     Camera m_camera;
     const Terrain &mcr_terrain;
+    bool flightMode;
+    bool m_isGrounded;
+
+    OpenGLContext* mp_context;
 
     void processInputs(InputBundle &inputs);
     void computePhysics(float dT, const Terrain &terrain);
@@ -16,6 +20,8 @@ public:
     // Readonly public reference to our camera
     // for easy access from MyGL
     const Camera& mcr_camera;
+    glm::vec3 facingBlock;
+    bool showB;
 
     Player(glm::vec3 pos, const Terrain &terrain);
     virtual ~Player() override;
@@ -23,6 +29,8 @@ public:
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 
     void tick(float dT, InputBundle &input) override;
+
+    bool gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, const Terrain &terrain, float *out_dist, glm::ivec3 *out_blockHit);
 
     // Player overrides all of Entity's movement
     // functions so that it transforms its camera
@@ -47,4 +55,6 @@ public:
     QString velAsQString() const;
     QString accAsQString() const;
     QString lookAsQString() const;
+
+    void updateFacingBlock();
 };

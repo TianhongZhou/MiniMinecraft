@@ -50,16 +50,16 @@ private:
     // for every non-EMPTY block within its Chunks. This is horribly
     // inefficient, and will cause your game to run very slowly until
     // milestone 1's Chunk VBO setup is completed.
-    Cube m_geomCube;
+    // Cube m_geomCube;
 
+    OpenGLContext* mp_context;
+
+public:
     // Set this to "true" whenever you modify the blocks
     // in your terrain. NOT NEEDED ONCE MILESTONE 1's CHUNKING
     // IS IMPLEMENTED.
     bool m_chunkVBOsNeedUpdating;
 
-    OpenGLContext* mp_context;
-
-public:
     Terrain(OpenGLContext *context);
     ~Terrain();
 

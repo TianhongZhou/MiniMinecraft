@@ -31,6 +31,9 @@ private:
 
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
 
+    qint64 lastT;
+    InputBundle input;
+
     void moveMouseToCenter(); // Forces the mouse position to the screen's center. You should call this
                               // from within a mouse move event after reading the mouse movement so that
                               // your mouse stays within the screen bounds and is always read.

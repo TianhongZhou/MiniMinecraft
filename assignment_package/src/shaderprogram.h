@@ -6,9 +6,9 @@
 #include <glm/glm.hpp>
 #include "drawable.h"
 #include <unordered_map>
+#include "scene/chunk.h"
 
 #define dict std::unordered_map
-
 
 class ShaderProgram
 {
@@ -48,6 +48,7 @@ public:
     // Draw the given object to our screen using this ShaderProgram's shaders
     void draw(Drawable &d);
     void drawInstanced(InstancedDrawable &d);
+    void drawInterleaved(Drawable &d);
     // Utility function used in create()
     char* textFileRead(const char*);
     // Utility function that prints any shader compilation errors to the console

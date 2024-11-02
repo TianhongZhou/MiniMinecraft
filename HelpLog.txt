@@ -1,0 +1,11 @@
+2024.10.31 14:18 : QtKeyReleaseEvent always calling. Wish to like make the call only happens when I actually release a button, so that I can make the F and spcae button only work once even if the user is holding the button. Find answer on the website: https://blog.csdn.net/wl215609371/article/details/124983287
+
+2024.11.01 00:54 ： m_terrain.setGlobalBlockAt(32, 130, 32, STONE);
+renderTerrain();
+in the paintGL, it can successfully change the block there to stone.
+
+However, if I change the code to
+
+renderTerrain();
+m_terrain.setGlobalBlockAt(32, 130, 32, STONE);
+It cannot change the block there to stone. Also, if I call the setGlobalBlockAt in other functions, it also cannot change the block. I am wondering why it happens. In my mind, I think that for the second way, it will also change the block type stored at that chunk and will be redrawn in next frame when paintGL is called. But it didn't. Post a thread on ED: https://edstem.org/us/courses/63617/discussion/5622479

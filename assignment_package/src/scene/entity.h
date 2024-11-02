@@ -2,12 +2,13 @@
 #include "glm_includes.h"
 
 struct InputBundle {
-    bool wPressed, aPressed, sPressed, dPressed;
+    bool wPressed, aPressed, sPressed, dPressed, qPressed, ePressed, fPressed;
     bool spacePressed;
     float mouseX, mouseY;
 
     InputBundle()
         : wPressed(false), aPressed(false), sPressed(false),
+          qPressed(false), ePressed(false), fPressed(false),
           dPressed(false), spacePressed(false), mouseX(0.f), mouseY(0.f)
     {}
 };
@@ -54,4 +55,6 @@ public:
     virtual void rotateOnForwardGlobal(float degrees);
     virtual void rotateOnRightGlobal(float degrees);
     virtual void rotateOnUpGlobal(float degrees);
+
+    virtual glm::vec3 getForward();
 };

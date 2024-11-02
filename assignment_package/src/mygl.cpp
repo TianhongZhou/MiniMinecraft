@@ -1,4 +1,5 @@
 #include "mygl.h"
+#include "qdatetime.h"
 #include <glm_includes.h>
 
 #include <iostream>
@@ -10,7 +11,8 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain)
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+      lastT(QDateTime::currentMSecsSinceEpoch()), input(*mkU<InputBundle>())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -90,6 +92,9 @@ void MyGL::resizeGL(int w, int h) {
 // all per-frame actions here, such as performing physics updates on all
 // entities in the scene.
 void MyGL::tick() {
+    float dt = QDateTime::currentMSecsSinceEpoch() - lastT;
+    lastT = QDateTime::currentMSecsSinceEpoch();
+    m_player.tick(dt, input);
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
 }
@@ -117,6 +122,7 @@ void MyGL::paintGL() {
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
+    m_progLambert.setUnifMat4("u_Model", glm::mat4());
 
     renderTerrain();
 
@@ -130,53 +136,147 @@ void MyGL::paintGL() {
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
 void MyGL::renderTerrain() {
-    m_terrain.draw(0, 64, 0, 64, &m_progInstanced);
+    m_terrain.draw(0, 64, 0, 64, &m_progLambert);
 }
 
 
 void MyGL::keyPressEvent(QKeyEvent *e) {
-    float amount = 2.0f;
-    if(e->modifiers() & Qt::ShiftModifier){
-        amount = 10.0f;
-    }
-    // http://doc.qt.io/qt-5/qt.html#Key-enum
-    // This could all be much more efficient if a switch
-    // statement were used, but I really dislike their
-    // syntax so I chose to be lazy and use a long
-    // chain of if statements instead
     if (e->key() == Qt::Key_Escape) {
         QApplication::quit();
-    } else if (e->key() == Qt::Key_Right) {
-        m_player.rotateOnUpGlobal(-amount);
-    } else if (e->key() == Qt::Key_Left) {
-        m_player.rotateOnUpGlobal(amount);
-    } else if (e->key() == Qt::Key_Up) {
-        m_player.rotateOnRightLocal(-amount);
-    } else if (e->key() == Qt::Key_Down) {
-        m_player.rotateOnRightLocal(amount);
-    } else if (e->key() == Qt::Key_W) {
-        m_player.moveForwardLocal(amount);
-    } else if (e->key() == Qt::Key_S) {
-        m_player.moveForwardLocal(-amount);
-    } else if (e->key() == Qt::Key_D) {
-        m_player.moveRightLocal(amount);
-    } else if (e->key() == Qt::Key_A) {
-        m_player.moveRightLocal(-amount);
-    } else if (e->key() == Qt::Key_Q) {
-        m_player.moveUpGlobal(-amount);
-    } else if (e->key() == Qt::Key_E) {
-        m_player.moveUpGlobal(amount);
+    }
+
+    if (e->key() == Qt::Key_W) {
+        input.wPressed = true;
+    }
+
+    if (e->key() == Qt::Key_A) {
+        input.aPressed = true;
+    }
+
+    if (e->key() == Qt::Key_S) {
+        input.sPressed = true;
+    }
+
+    if (e->key() == Qt::Key_D) {
+        input.dPressed = true;
+    }
+
+    if (e->key() == Qt::Key_Q) {
+        input.qPressed = true;
+    }
+
+    if (e->key() == Qt::Key_E) {
+        input.ePressed = true;
+    }
+
+    if (e->key() == Qt::Key_F && !e->isAutoRepeat()) {
+        input.fPressed = true;
+    }
+
+    if (e->key() == Qt::Key_Space && !e->isAutoRepeat()) {
+        input.spacePressed = true;
     }
 }
 
 void MyGL::keyReleaseEvent(QKeyEvent *e) {
-    ;
+    if (e->key() == Qt::Key_W) {
+        input.wPressed = false;
+    }
+
+    if (e->key() == Qt::Key_A) {
+        input.aPressed = false;
+    }
+
+    if (e->key() == Qt::Key_S) {
+        input.sPressed = false;
+    }
+
+    if (e->key() == Qt::Key_D) {
+        input.dPressed = false;
+    }
+
+    if (e->key() == Qt::Key_Q) {
+        input.qPressed = false;
+    }
+
+    if (e->key() == Qt::Key_E) {
+        input.ePressed = false;
+    }
+
+    if (e->key() == Qt::Key_F && !e->isAutoRepeat()) {
+        input.fPressed = false;
+    }
+
+    if (e->key() == Qt::Key_Space && !e->isAutoRepeat()) {
+        input.spacePressed = false;
+    }
 }
 
 void MyGL::mouseMoveEvent(QMouseEvent *e) {
-    // TODO
+    QPoint center = mapToGlobal(QPoint(width() / 2, height() / 2));
+
+    float deltaX = e->pos().x() - width() / 2;
+    float deltaY = e->pos().y() - height() / 2;
+
+    input.mouseX = deltaX;
+    input.mouseY = deltaY;
+
+    QCursor::setPos(center);
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
-    // TODO
+    if (e->button() == Qt::LeftButton) {
+        if (m_player.showB) {
+            m_player.showB = false;
+            glm::vec3 block = m_player.facingBlock;
+            m_terrain.setGlobalBlockAt(block.x, block.y, block.z, EMPTY);
+        }
+    } else if (e->button() == Qt::RightButton) {
+        if (m_player.showB) {
+            m_player.showB = false;
+            glm::vec3 block = m_player.facingBlock;
+            BlockType t = m_terrain.getGlobalBlockAt(block.x, block.y, block.z);
+
+            glm::vec3 origin = m_player.mcr_camera.mcr_position;
+            glm::vec3 ray = m_player.getForward();
+
+            glm::vec3 invDir = 1.0f / ray;
+            glm::vec3 tMin = (block - origin) * invDir;
+            glm::vec3 tMax = (block + glm::vec3(1.0f) - origin) * invDir;
+
+            glm::vec3 t1 = glm::min(tMin, tMax);
+            glm::vec3 t2 = glm::max(tMin, tMax);
+
+            float tNear = glm::max(glm::max(t1.x, t1.y), t1.z);
+            float tFar = glm::min(glm::min(t2.x, t2.y), t2.z);
+
+            if (tNear < tFar && tFar > 0) {
+                glm::vec3 hitPoint = origin + tNear * ray;
+                glm::vec3 normal;
+
+                if (fabs(hitPoint.x - block.x) < 0.001f) {
+                    normal = glm::vec3(-1, 0, 0);
+                } else if (fabs(hitPoint.x - (block.x + 1.0f)) < 0.001f) {
+                    normal = glm::vec3(1, 0, 0);
+                } else if (fabs(hitPoint.y - block.y) < 0.001f) {
+                    normal = glm::vec3(0, -1, 0);
+                } else if (fabs(hitPoint.y - (block.y + 1.0f)) < 0.001f) {
+                    normal = glm::vec3(0, 1, 0);
+                } else if (fabs(hitPoint.z - block.z) < 0.001f) {
+                    normal = glm::vec3(0, 0, -1);
+                } else if (fabs(hitPoint.z - (block.z + 1.0f)) < 0.001f) {
+                    normal = glm::vec3(0, 0, 1);
+                }
+
+                glm::vec3 newBlockPos = block + normal;
+                glm::vec3 playerPos = glm::floor(m_player.mcr_position);
+                glm::vec3 playerPosPlus1 = playerPos;
+                playerPosPlus1.y = playerPosPlus1.y + 1;
+                if (m_terrain.getGlobalBlockAt(newBlockPos.x, newBlockPos.y, newBlockPos.z) == EMPTY &&
+                    newBlockPos != playerPos && newBlockPos != playerPosPlus1) {
+                    m_terrain.setGlobalBlockAt(newBlockPos.x, newBlockPos.y, newBlockPos.z, t);
+                }
+            }
+        }
+    }
 }

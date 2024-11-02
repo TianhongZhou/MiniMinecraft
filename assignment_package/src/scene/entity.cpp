@@ -15,6 +15,9 @@ Entity::Entity(const Entity &e)
 Entity::~Entity()
 {}
 
+glm::vec3 Entity::getForward() {
+    return m_forward;
+}
 
 void Entity::moveAlongVector(glm::vec3 dir) {
     m_position += dir;
