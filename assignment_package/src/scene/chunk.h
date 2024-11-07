@@ -15,7 +15,7 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER
+    EMPTY, GRASS, DIRT, STONE, WATER, SNOW
 };
 
 // The six cardinal directions in 3D space
@@ -87,7 +87,8 @@ const static std::unordered_map<BlockType, glm::vec4, EnumHash> block2Color = {
     {GRASS, glm::vec4(glm::vec3(95.f, 159.f, 53.f) / 255.f, 1.f)},
     {DIRT, glm::vec4(glm::vec3(121.f, 85.f, 58.f) / 255.f, 1.f)},
     {STONE, glm::vec4(0.5f, 0.5f, 0.5f, 1.f)},
-    {WATER, glm::vec4(0.f, 0.f, 0.75f, 1.f)}
+    {WATER, glm::vec4(0.f, 0.f, 0.75f, 1.f)},
+    {SNOW, glm::vec4(1.f, 1.f, 1.f, 1.f)}
 };
 
 // One Chunk is a 16 x 256 x 16 section of the world,

@@ -11,7 +11,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+      m_terrain(this), m_player(glm::vec3(48.f, 140.f, 48.f), m_terrain),
       lastT(QDateTime::currentMSecsSinceEpoch()), input(*mkU<InputBundle>())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -67,7 +67,7 @@ void MyGL::initializeGL()
     // using multiple VAOs, we can just bind one once.
     glBindVertexArray(vao);
 
-    m_terrain.CreateTestScene();
+    m_terrain.CreateInitialScene();
 }
 
 
@@ -95,6 +95,7 @@ void MyGL::tick() {
     float dt = QDateTime::currentMSecsSinceEpoch() - lastT;
     lastT = QDateTime::currentMSecsSinceEpoch();
     m_player.tick(dt, input);
+    m_terrain.updateScene(m_player.mcr_position);
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
 }
@@ -128,7 +129,7 @@ void MyGL::paintGL() {
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setUnifMat4("u_Model", glm::mat4());
-    m_progFlat.draw(m_worldAxes);
+    //m_progFlat.draw(m_worldAxes);
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -136,7 +137,12 @@ void MyGL::paintGL() {
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
 void MyGL::renderTerrain() {
-    m_terrain.draw(0, 64, 0, 64, &m_progLambert);
+    glm::vec3 currPos = m_player.mcr_position;
+    int currX = glm::floor(currPos.x / 16.f);
+    int currZ = glm::floor(currPos.z / 16.f);
+    int x = 16 * currX;
+    int z = 16 * currZ;
+    m_terrain.draw(x - 32, x + 32, z - 32, z + 32, &m_progLambert);
 }
 
 

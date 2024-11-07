@@ -60,6 +60,7 @@ void Player::processInputs(InputBundle &inputs) {
         if (inputs.qPressed) {
             m_acceleration -= m_up;
         }
+        m_acceleration *= 0.5;
     } else {
         if (inputs.wPressed) {
             glm::vec3 forward = m_forward;
@@ -86,9 +87,10 @@ void Player::processInputs(InputBundle &inputs) {
             m_acceleration -= right;
         }
         if (inputs.spacePressed && m_velocity.y == 0.f) {
-            m_acceleration += glm::vec3(0.f, 18.f, 0.f);
+            m_acceleration += glm::vec3(0.f, 60.f, 0.f);
             inputs.spacePressed = false;
         }
+        m_acceleration *= 0.3;
     }
 
     if (inputs.fPressed) {
@@ -104,7 +106,7 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
     m_velocity += m_acceleration * dT;
 
     if (!flightMode) {
-        m_velocity.y -= 0.2f * 9.81f * dT;
+        m_velocity.y -= 0.3f * 9.81f * dT;
     }
 
     glm::vec3 movement = m_velocity * 0.0001f * dT;
