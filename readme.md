@@ -15,3 +15,4 @@ add constrain for rotating
 
 difficulty:
 blocked by height 2 but not height 1. found that issues with "standing on the ground using y-axis collision", add 1 on y pos, so the player is actually from 1 to 2 instead of from 0 to 1
+跳帧,add max dt
