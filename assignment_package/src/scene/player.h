@@ -16,6 +16,9 @@ private:
     void processInputs(InputBundle &inputs);
     void computePhysics(float dT, const Terrain &terrain);
 
+    float pitch;
+    const float maxPitch;
+
 public:
     // Readonly public reference to our camera
     // for easy access from MyGL

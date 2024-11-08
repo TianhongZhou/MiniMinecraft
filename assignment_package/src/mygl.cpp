@@ -128,8 +128,13 @@ void MyGL::paintGL() {
     renderTerrain();
 
     glDisable(GL_DEPTH_TEST);
-    m_progFlat.setUnifMat4("u_Model", glm::mat4());
-    //m_progFlat.draw(m_worldAxes);
+
+    glm::mat4 ortho = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
+    m_progFlat.setUnifMat4("u_ViewProj", ortho);
+
+    m_progFlat.setUnifMat4("u_Model", glm::mat4(1.0f));
+    m_progFlat.draw(m_worldAxes);
+
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -142,7 +147,7 @@ void MyGL::renderTerrain() {
     int currZ = glm::floor(currPos.z / 16.f);
     int x = 16 * currX;
     int z = 16 * currZ;
-    m_terrain.draw(x - 32, x + 32, z - 32, z + 32, &m_progLambert);
+    m_terrain.draw(x - 96, x + 97, z - 96, z + 97, &m_progLambert);
 }
 
 

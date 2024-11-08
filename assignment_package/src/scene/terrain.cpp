@@ -11,9 +11,7 @@ Terrain::Terrain(OpenGLContext *context)
 {}
 
 Terrain::~Terrain() {
-    for (auto& [_, chunk] : m_chunks) {
-        chunk->destroyVBOdata();
-    }
+
 }
 
 // Combine two 32-bit ints into one 64-bit int
@@ -122,7 +120,7 @@ void Terrain::setGlobalBlockAt(int x, int y, int z, BlockType t)
 Chunk* Terrain::instantiateChunkAt(int x, int z) {
     uPtr<Chunk> chunk = mkU<Chunk>(x, z, mp_context);
     Chunk *cPtr = chunk.get();
-    m_chunks[toKey(x, z)] = move(chunk);
+    m_chunks[toKey(x, z)] = std::move(chunk);
     // Set the neighbor pointers of itself and its neighbors
     if(hasChunkAt(x, z + 16)) {
         auto &chunkNorth = m_chunks[toKey(x, z + 16)];
@@ -140,6 +138,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
         auto &chunkWest = m_chunks[toKey(x - 16, z)];
         cPtr->linkNeighbor(chunkWest, XNEG);
     }
+
     return cPtr;
 }
 
@@ -168,14 +167,14 @@ float surflet(glm::vec2 P, glm::vec2 gridPoint) {
     float tX = 1.f - 6.f * pow(distX, 5.f) + 15.f * pow(distX, 4.f) - 10.f * pow(distX, 3.f);
     float tY = 1.f - 6.f * pow(distY, 5.f) + 15.f * pow(distY, 4.f) - 10.f * pow(distY, 3.f);
 
-    glm::vec2 gradient = random2(gridPoint);
+    glm::vec2 gradient = 2.f * random2(gridPoint) - glm::vec2(1.f);
     glm::vec2 diff = P - gridPoint;
     float height = glm::dot(diff, gradient);
     return height * tX * tY;
 }
 
 float PerlinNoise(glm::vec2 uv) {
-float surfletSum = 0.f;
+    float surfletSum = 0.f;
     for(int dx = 0; dx <= 1; dx++) {
         for(int dy = 0; dy <= 1; dy++) {
             surfletSum += surflet(uv, glm::floor(uv) + glm::vec2(dx, dy));
@@ -184,104 +183,60 @@ float surfletSum = 0.f;
     return surfletSum;
 }
 
-float worleyNoise(glm::vec2 uv) {
-    glm::vec2 uvint = glm::floor(uv);
-    glm::vec2 uvfract = glm::fract(uv);
-    float minD = 1.f;
-
-    for(int y = -1; y <= 1; y++){
-        for(int x = -1; x <= 1; x++) {
-            glm::vec2 neigh = glm::vec2(float(x), float(y));
-            glm::vec2 point = random2(uvint + neigh);
-            glm::vec2 diff = neigh + point - uvfract;
-            float dist = glm::length(diff);
-            minD = glm::min(minD, dist);
-        }
-    }
-    return minD;
-}
-
-int calculateMountainHeight(int x, int z, const std::vector<std::vector<double>>& heightMap) {
-    return glm::clamp((int) (std::pow(std::abs(heightMap[z][x]), 1.2f)), 0, 128);
-}
-
-void generateFractalMountainHeights(std::vector<std::vector<double>>& heightMap, int levels, int size) {
-    for (int level = 0; level < levels; level++) {
-        int step = size / std::pow(2, level);
-
-        for (int y = 0; y <= size; y += step) {
-            int offsetToggle = 1 - (y / step) % 2;
-
-            if (level == 0) offsetToggle = 0;
-
-            for (int x = step * offsetToggle; x <= size; x += step * (1 + offsetToggle)) {
-                int direction = 1 - (x / step) % 2 + 2 * offsetToggle;
-                if (level == 0) direction = 3;
-
-                int yOffset = step * (1 - direction / 2);
-                int xOffset = step * (1 - direction % 2);
-
-                double corner1 = heightMap[y - yOffset][x - xOffset];
-                double corner2 = heightMap[y + yOffset][x + xOffset];
-                double avgHeight = (corner1 + corner2) / 2.0;
-                double variation = step * (glm::linearRand(0.0, 1.0) - 0.5);
-
-                heightMap[y][x] = (level > 0) ? avgHeight + variation : 0;
-            }
-        }
-    }
+int calculateMountainHeight(int x, int z) {
+    return (int) (std::pow((PerlinNoise(glm::vec2(x, z) / 50.f) + 1.f) / 2.f, 4.f) * 350.f);
 }
 
 int calculateGrasslandHeight(int x, int z) {
-    return (int) (glm::floor(1.f - std::abs(PerlinNoise(glm::vec2(x, z) / 70.f)) * 20.f));
+    return (int) ((0.5f - std::abs(PerlinNoise(glm::vec2(x, z) / 70.f))) * 30.f);
 }
 
 void Terrain::CreateTestScene()
 {
-    // TODO: DELETE THIS LINE WHEN YOU DELETE m_geomCube!
-    // m_geomCube.createVBOdata();
+    // // TODO: DELETE THIS LINE WHEN YOU DELETE m_geomCube!
+    // // m_geomCube.createVBOdata();
 
-    // Create the Chunks that will
-    // store the blocks for our
-    // initial world space
-    for(int x = 0; x < 64; x += 16) {
-        for(int z = 0; z < 64; z += 16) {
-            instantiateChunkAt(x, z);
-        }
-    }
-    // Tell our existing terrain set that
-    // the "generated terrain zone" at (0,0)
-    // now exists.
-    m_generatedTerrain.insert(toKey(0, 0));
+    // // Create the Chunks that will
+    // // store the blocks for our
+    // // initial world space
+    // for(int x = 0; x < 64; x += 16) {
+    //     for(int z = 0; z < 64; z += 16) {
+    //         instantiateChunkAt(x, z);
+    //     }
+    // }
+    // // Tell our existing terrain set that
+    // // the "generated terrain zone" at (0,0)
+    // // now exists.
+    // m_generatedTerrain.insert(toKey(0, 0));
 
-    // Create the basic terrain glm::floor
-    for(int x = 0; x < 64; ++x) {
-        for(int z = 0; z < 64; ++z) {
-            if((x + z) % 2 == 0) {
-                setGlobalBlockAt(x, 128, z, STONE);
-            }
-            else {
-                setGlobalBlockAt(x, 128, z, DIRT);
-            }
-        }
-    }
-    // Add "walls" for collision testing
-    for(int x = 0; x < 64; ++x) {
-        setGlobalBlockAt(x, 129, 16, GRASS);
-        setGlobalBlockAt(x, 130, 16, GRASS);
-        setGlobalBlockAt(x, 129, 48, GRASS);
-        setGlobalBlockAt(16, 130, x, GRASS);
-    }
-    // Add a central column
-    for(int y = 129; y < 140; ++y) {
-        setGlobalBlockAt(32, y, 32, GRASS);
-    }
+    // // Create the basic terrain glm::floor
+    // for(int x = 0; x < 64; ++x) {
+    //     for(int z = 0; z < 64; ++z) {
+    //         if((x + z) % 2 == 0) {
+    //             setGlobalBlockAt(x, 128, z, STONE);
+    //         }
+    //         else {
+    //             setGlobalBlockAt(x, 128, z, DIRT);
+    //         }
+    //     }
+    // }
+    // // Add "walls" for collision testing
+    // for(int x = 0; x < 64; ++x) {
+    //     setGlobalBlockAt(x, 129, 16, GRASS);
+    //     setGlobalBlockAt(x, 130, 16, GRASS);
+    //     setGlobalBlockAt(x, 129, 48, GRASS);
+    //     setGlobalBlockAt(16, 130, x, GRASS);
+    // }
+    // // Add a central column
+    // for(int y = 129; y < 140; ++y) {
+    //     setGlobalBlockAt(32, y, 32, GRASS);
+    // }
 }
 
 void Terrain::CreateInitialScene()
 {
-    int xMin = 16, xMax = 80;
-    int zMin = 16, zMax = 80;
+    int xMin = -96, xMax = 96;
+    int zMin = -96, zMax = 96;
 
     for(int x = xMin; x < xMax; x += 16) {
         for(int z = zMin; z < zMax; z += 16) {
@@ -289,33 +244,45 @@ void Terrain::CreateInitialScene()
         }
     }
 
-    m_generatedTerrain.insert(toKey(0, 0));
+    for (int x = xMin; x < xMax; x+= 16) {
+        for (int z = zMin; z < zMax; z += 16) {
+            generateBiome(x, z);
+        }
+    }
+}
 
+void Terrain::generateBiome(int xMin, int zMin) {
     int baseHeight = 128;
     int waterLevel = 138;
     int snowLevel = 200;
 
-    int fractalLevels = 9;
-    int gridSize = std::pow(2, fractalLevels - 1);
-    std::vector<std::vector<double>> mountainHeightMap(gridSize + 1, std::vector<double>(gridSize + 1, 0.0));
-    generateFractalMountainHeights(mountainHeightMap, fractalLevels, gridSize);
+    for(int x = xMin; x < xMin + 16; x++) {
+        for(int z = zMin; z < zMin + 16; z++) {
+            // for (int y = 0; y <= baseHeight; y++) {
+            //     setGlobalBlockAt(x, y, z, STONE);
+            // }
 
-    for(int x = xMin; x < xMax; x++) {
-        for(int z = zMin; z < zMax; z++) {
-            int mountainHeight = calculateMountainHeight(x, z, mountainHeightMap);
+            int mountainHeight = calculateMountainHeight(x, z);
             int grasslandHeight = calculateGrasslandHeight(x, z);
 
-            float blendFactor = worleyNoise(glm::vec2(x, z) * 0.005f);
-            blendFactor = glm::smoothstep(0.25f, 0.75f, blendFactor);
+            float blendFactor = PerlinNoise(glm::vec2(x, z) / 2000.f);
+            blendFactor = glm::smoothstep(0.3f, 0.7f, blendFactor * 0.5f + 0.5f);
 
-            int interpolatedHeight = glm::clamp((int) (glm::mix(grasslandHeight, mountainHeight, blendFactor)), 0, baseHeight - 1);
+            int interpolatedHeight = glm::mix(grasslandHeight, mountainHeight, blendFactor);
+            interpolatedHeight = glm::clamp(interpolatedHeight, 0, baseHeight - 1);
+
+            bool isGrassland = interpolatedHeight < 20;
+
             for (int y = 0; y <= interpolatedHeight; y++) {
-                if (blendFactor > 0.5) {
-                    setGlobalBlockAt(x, y + baseHeight, z, (y + baseHeight >= snowLevel && y == interpolatedHeight) ? SNOW : STONE);
+                if (y + baseHeight >= snowLevel && y == interpolatedHeight && !isGrassland) {
+                    setGlobalBlockAt(x, y + baseHeight, z, SNOW);
+                } else if (y == interpolatedHeight) {
+                    setGlobalBlockAt(x, y + baseHeight, z, isGrassland ? GRASS : STONE);
                 } else {
-                    setGlobalBlockAt(x, y + baseHeight, z, (y == interpolatedHeight) ? GRASS : DIRT);
+                    setGlobalBlockAt(x, y + baseHeight, z, isGrassland ? DIRT : STONE);
                 }
             }
+
 
             if (interpolatedHeight + baseHeight < waterLevel) {
                 for (int y = interpolatedHeight + baseHeight; y < waterLevel; y++) {
@@ -340,44 +307,11 @@ void Terrain::updateScene(glm::vec3 pos) {
     for (const auto& offset : offsets) {
         int neighborX = x + offset.first;
         int neighborZ = z + offset.second;
-        if (!hasChunkAt(neighborX, neighborZ)) {
+
+        if (!hasChunkAt(neighborX, neighborZ) || !m_chunks[toKey(neighborX, neighborZ)]) {
             instantiateChunkAt(neighborX, neighborZ);
 
-            m_generatedTerrain.insert(toKey(neighborX, neighborZ));
-
-            int baseHeight = 128;
-            int waterLevel = 138;
-            int snowLevel = 200;
-
-            int fractalLevels = 9;
-            int gridSize = std::pow(2, fractalLevels - 1);
-            std::vector<std::vector<double>> mountainHeightMap(gridSize + 1, std::vector<double>(gridSize + 1, 0.0));
-            generateFractalMountainHeights(mountainHeightMap, fractalLevels, gridSize);
-
-            for(int x = neighborX; x < neighborX + 16; x++) {
-                for(int z = neighborZ; z < neighborZ + 16; z++) {
-                    int mountainHeight = calculateMountainHeight(x, z, mountainHeightMap);
-                    int grasslandHeight = calculateGrasslandHeight(x, z);
-
-                    float blendFactor = worleyNoise(glm::vec2(x, z) * 0.005f);
-                    blendFactor = glm::smoothstep(0.25f, 0.75f, blendFactor);
-
-                    int interpolatedHeight = glm::clamp((int) (glm::mix(grasslandHeight, mountainHeight, blendFactor)), 0, baseHeight - 1);
-                    for (int y = 0; y <= interpolatedHeight; y++) {
-                        if (blendFactor > 0.5) {
-                            setGlobalBlockAt(x, y + baseHeight, z, (y + baseHeight >= snowLevel && y == interpolatedHeight) ? SNOW : STONE);
-                        } else {
-                            setGlobalBlockAt(x, y + baseHeight, z, (y == interpolatedHeight) ? GRASS : DIRT);
-                        }
-                    }
-
-                    if (interpolatedHeight + baseHeight < waterLevel) {
-                        for (int y = interpolatedHeight + baseHeight; y < waterLevel; y++) {
-                            setGlobalBlockAt(x, y, z, WATER);
-                        }
-                    }
-                }
-            }
+            generateBiome(neighborX, neighborZ);
         }
     }
 }

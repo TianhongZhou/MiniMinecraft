@@ -43,13 +43,14 @@ BlockType Chunk::getAdjacentBlock(int i, int j, int k, const glm::vec3 &dirVec, 
     glm::vec3 testBorder = glm::vec3(i, j, k) + dirVec;
     if (testBorder.x >= 16.f || testBorder.y >= 256.f || testBorder.z >= 16.f ||
         testBorder.x < 0.f || testBorder.y < 0.f || testBorder.z < 0.f) {
-        Chunk* adjChunk = chunk->m_neighbors[Direction(int(dirVec.x + dirVec.y + dirVec.z))];
-        if (adjChunk != nullptr) {
-            int dx = (16 + i + int(dirVec.x)) % 16;
-            int dy = (256 + j + int(dirVec.y)) % 256;
-            int dz = (16 + k + int(dirVec.z)) % 16;
-            return adjChunk->getLocalBlockAt(dx, dy, dz);
-        }
+        // Chunk* adjChunk = chunk->m_neighbors[Direction(int(dirVec.x + dirVec.y + dirVec.z))];
+        // if (adjChunk != nullptr) {
+        //     int dx = (16 + i + int(dirVec.x)) % 16;
+        //     int dy = (256 + j + int(dirVec.y)) % 256;
+        //     int dz = (16 + k + int(dirVec.z)) % 16;
+        //     return adjChunk->getLocalBlockAt(dx, dy, dz);
+        // }
+        return EMPTY;
     } else {
         return chunk->getLocalBlockAt(i + int(dirVec.x), j + int(dirVec.y), k + int(dirVec.z));
     }
@@ -101,7 +102,6 @@ void Chunk::createChunkVBOdata(int xChunk, int zChunk) {
     }
     this->indexCounts[INDEX] = idx.size();
 }
-
 
 void Chunk::createVBOdata() {
     generateBuffer(INDEX);

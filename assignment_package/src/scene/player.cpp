@@ -5,13 +5,15 @@
 Player::Player(glm::vec3 pos, const Terrain &terrain)
     : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
-      mcr_camera(m_camera), flightMode(true), facingBlock(glm::vec3(0.f, 0.f, 0.f)), showB(false)
+      mcr_camera(m_camera), flightMode(true), facingBlock(glm::vec3(0.f, 0.f, 0.f)), showB(false),
+      pitch(0.f), maxPitch(90.f)
 {}
 
 Player::~Player()
 {}
 
 void Player::tick(float dT, InputBundle &input) {
+    dT = glm::clamp(dT, 0.f, 100.f);
     processInputs(input);
     computePhysics(dT, mcr_terrain);
     updateFacingBlock();
@@ -60,7 +62,7 @@ void Player::processInputs(InputBundle &inputs) {
         if (inputs.qPressed) {
             m_acceleration -= m_up;
         }
-        m_acceleration *= 0.5;
+        m_acceleration *= 0.2;
     } else {
         if (inputs.wPressed) {
             glm::vec3 forward = m_forward;
@@ -87,10 +89,10 @@ void Player::processInputs(InputBundle &inputs) {
             m_acceleration -= right;
         }
         if (inputs.spacePressed && m_velocity.y == 0.f) {
-            m_acceleration += glm::vec3(0.f, 60.f, 0.f);
+            m_acceleration += glm::vec3(0.f, 80.f, 0.f);
             inputs.spacePressed = false;
         }
-        m_acceleration *= 0.3;
+        m_acceleration *= 0.1;
     }
 
     if (inputs.fPressed) {
@@ -237,6 +239,15 @@ void Player::rotateOnForwardLocal(float degrees) {
     m_camera.rotateOnForwardLocal(degrees);
 }
 void Player::rotateOnRightLocal(float degrees) {
+    float newPitch = pitch + degrees;
+    if (newPitch > maxPitch) {
+        degrees = maxPitch - pitch;
+    } else if (newPitch < -maxPitch) {
+        degrees = -maxPitch - pitch;
+    }
+
+    pitch += degrees;
+
     Entity::rotateOnRightLocal(degrees);
     m_camera.rotateOnRightLocal(degrees);
 }
@@ -249,8 +260,8 @@ void Player::rotateOnForwardGlobal(float degrees) {
     m_camera.rotateOnForwardGlobal(degrees);
 }
 void Player::rotateOnRightGlobal(float degrees) {
-    Entity::rotateOnRightGlobal(degrees);
-    m_camera.rotateOnRightGlobal(degrees);
+    Entity::rotateOnRightLocal(degrees);
+    m_camera.rotateOnRightLocal(degrees);
 }
 void Player::rotateOnUpGlobal(float degrees) {
     Entity::rotateOnUpGlobal(degrees);

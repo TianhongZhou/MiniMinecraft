@@ -54,6 +54,8 @@ private:
 
     OpenGLContext* mp_context;
 
+    std::vector<std::vector<double>> mountainHeightMap;
+
 public:
     // Set this to "true" whenever you modify the blocks
     // in your terrain. NOT NEEDED ONCE MILESTONE 1's CHUNKING
@@ -94,7 +96,7 @@ public:
     // see when the base code is run.
     void CreateTestScene();
 
-    void generateBiome(int x, int z);
+    void generateBiome(int xMin, int zMin);
     void CreateInitialScene();
     void updateScene(glm::vec3 pos);
 };
