@@ -24,29 +24,22 @@ The difficulty that I encountered was how to determine which chunk belongs to wh
 
 #### Implementation
 
+The `createChunkVBOdata()` and `createVBOdata()` functions in chunk.cpp are central to this feature. `createChunkVBOdata()` iterates through all blocks in the current chunk and stores the face data of blocks with EMPTY adjacent blocks into the index and VBO arrays. These arrays are then bound by `createVBOdata()` for rendering.
+
 #### Difficulties
+
+Some block faces along chunk borders were not rendering correctly. This issue stemmed from `getAdjacentBlock()` in chunk.cpp. When a border block calls `getAdjacentBlock()`, it needs to check if its adjacent block in a neighboring chunk is EMPTY to correctly determine if a face should be drawn. However, my initial implementation did not correctly identify these cases, leading to missing faces. To address this, I modified the implementation to return EMPTY for adjacent blocks in neighboring chunks regardless of their actual type. This change ensures all border faces are rendered, avoiding gaps in chunk borders.
+
+When expanding the terrain, some neighboring chunks failed to generate while others succeeded. I traced this issue to `m_chunks`, which contained some chunk keys with nullptr values. Initially, the code only checked if a key existed in `m_chunks`, which was insufficient. By additionally verifying that the key’s value is not nullptr, I was able to ensure reliable chunk generation across neighboring regions.
 
 ### Game Engine Tick Function and Player Physics
 
 #### Implementation
 
+For handling key presses, I implemented a system where each detected key changes the player's acceleration. The `computePhysics()` function then calculates the resulting velocity and updates the player's position accordingly. For collision detection, I used the grid march method on the 12 vertices around the player and split the movement vector into X, Y, and Z components. This allowed me to test each axis individually, resulting in smoother collision detection. For adding and removing blocks, I also used grid march to identify the correct block for deletion or placement. The position of a new block is determined by the ray direction, and the block is added to the face intersected by the ray.
+
 #### Difficulties
 
-Procedural Terrain
+Initially, the player was only blocked by walls two blocks high but could pass through walls one block high. I discovered that when standing on the ground, the player’s actual position along the y-axis was one block higher than it should be, allowing it to pass through shorter walls. I resolved this by moving the player down by one block when standing on the ground.
 
-Efficient Terrain Rendering and Chunking
-difficulty:
-unable to show anything after the implementation of chunking. after an entire day of debugging, find that did not change the shader from instanced to lambert.
-
-some faces not showing at the border of chunk. hard-code for all adjchunk to be null
-
-some neighbour chunk unable to generate, some able. problem with m_chunks, it will contain some chunk key with nullptr value, need to check addition to hadChunkAt
-
-
-Game Engine Tick Function and Player Physics
-add aiming
-add constrain for rotating
-
-difficulty:
-blocked by height 2 but not height 1. found that issues with "standing on the ground using y-axis collision", add 1 on y pos, so the player is actually from 1 to 2 instead of from 0 to 1
-跳帧,add max dt
+After completing the milestone, I noticed the game was experiencing lag. The dT (delta time) values varied significantly, ranging from 100 to 600. When dT was large, it caused the player to "fly around" unexpectedly. For example, if the space bar was pressed at frame 0, the player's acceleration.y would increase. If a lag occurred before frame 1, dT could become quite large (e.g., 600), causing the player's velocity to be calculated as acceleration.y * 600, which was not intended. To address this, I clamped the dT values within a certain range to prevent extreme variations and maintain smoother gameplay.
