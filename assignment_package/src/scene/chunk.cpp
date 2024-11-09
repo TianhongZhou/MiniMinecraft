@@ -103,14 +103,18 @@ void Chunk::createChunkVBOdata(int xChunk, int zChunk) {
     this->indexCounts[INDEX] = idx.size();
 }
 
-void Chunk::createVBOdata() {
+void Chunk::bufferData(const std::vector<glm::vec4> &vertexData, const std::vector<GLuint> &indexData) {
     generateBuffer(INDEX);
     mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufHandles[INDEX]);
-    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexData.size() * sizeof(GLuint), indexData.data(), GL_STATIC_DRAW);
 
     generateBuffer(INTERLEAVED);
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, bufHandles[INTERLEAVED]);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, vboInter.size() * sizeof(glm::vec4), vboInter.data(), GL_STATIC_DRAW);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec4), vertexData.data(), GL_STATIC_DRAW);
+}
+
+void Chunk::createVBOdata() {
+    bufferData(vboInter, idx);
 }
 
 void Chunk::destroyVBOdata() {

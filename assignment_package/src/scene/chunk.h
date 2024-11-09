@@ -130,4 +130,5 @@ public:
     void createChunkFaceVBOdata(const BlockFaceData &f, int i, int j, int k, int xChunk, int zChunk, BlockType currBlock, Chunk* chunk, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount);
     BlockType getAdjacentBlock(int i, int j, int k, const glm::vec3 &dirVec, Chunk *chunk);
     void addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, const glm::vec4 &vertCol, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount);
+    void bufferData(const std::vector<glm::vec4> &vertexData, const std::vector<GLuint> &indexData);
 };
