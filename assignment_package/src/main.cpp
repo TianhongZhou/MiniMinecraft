@@ -4,6 +4,15 @@
 #include <QSurfaceFormat>
 #include <QDebug>
 
+// enables GPU on optisum devices
+#ifdef WIN64
+#include <windows.h>
+
+extern "C" {
+__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
+#endif
+
 void debugFormatVersion()
 {
     QSurfaceFormat form = QSurfaceFormat::defaultFormat();

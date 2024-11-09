@@ -184,7 +184,7 @@ float PerlinNoise(glm::vec2 uv) {
 }
 
 int calculateMountainHeight(int x, int z) {
-    return (int) (std::pow((PerlinNoise(glm::vec2(x, z) / 50.f) + 1.f) / 2.f, 4.f) * 350.f);
+    return (int) (std::pow((PerlinNoise(glm::vec2(x, z) / 50.f) + 1.f) / 2.f, 3.f) * 250.f);
 }
 
 int calculateGrasslandHeight(int x, int z) {
@@ -258,6 +258,9 @@ void Terrain::generateBiome(int xMin, int zMin) {
 
     for(int x = xMin; x < xMin + 16; x++) {
         for(int z = zMin; z < zMin + 16; z++) {
+            // This part is commemted out since otherwise
+            // the game will be super lagging. I will uncomment
+            // this part after the multithread in m2 implemented.
             // for (int y = 0; y <= baseHeight; y++) {
             //     setGlobalBlockAt(x, y, z, STONE);
             // }
