@@ -188,6 +188,7 @@ Makefile: ../../miniMinecraft.pro F:/software/QT/6.2.12/mingw_64/mkspecs/win32-g
 		F:/software/QT/6.2.12/mingw_64/mkspecs/features/qt_config.prf \
 		F:/software/QT/6.2.12/mingw_64/mkspecs/win32-g++/qmake.conf \
 		F:/software/QT/6.2.12/mingw_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		F:/software/QT/6.2.12/mingw_64/mkspecs/features/exclusive_builds.prf \
 		F:/software/QT/6.2.12/mingw_64/mkspecs/features/toolchain.prf \
 		F:/software/QT/6.2.12/mingw_64/mkspecs/features/default_pre.prf \
@@ -218,7 +219,6 @@ Makefile: ../../miniMinecraft.pro F:/software/QT/6.2.12/mingw_64/mkspecs/win32-g
 		F:/software/QT/6.2.12/mingw_64/lib/Qt6OpenGL.prl \
 		F:/software/QT/6.2.12/mingw_64/lib/Qt6Gui.prl \
 		F:/software/QT/6.2.12/mingw_64/lib/Qt6Core.prl \
-		.qmake.stash \
 		F:/software/QT/6.2.12/mingw_64/mkspecs/features/build_pass.prf \
 		../../glsl.qrc
 	$(QMAKE) -o Makefile ..\..\miniMinecraft.pro -spec win32-g++ "CONFIG+=debug" "CONFIG+=qml_debug"
@@ -340,6 +340,7 @@ F:/software/QT/6.2.12/mingw_64/mkspecs/features/qt_functions.prf:
 F:/software/QT/6.2.12/mingw_64/mkspecs/features/qt_config.prf:
 F:/software/QT/6.2.12/mingw_64/mkspecs/win32-g++/qmake.conf:
 F:/software/QT/6.2.12/mingw_64/mkspecs/features/spec_post.prf:
+.qmake.stash:
 F:/software/QT/6.2.12/mingw_64/mkspecs/features/exclusive_builds.prf:
 F:/software/QT/6.2.12/mingw_64/mkspecs/features/toolchain.prf:
 F:/software/QT/6.2.12/mingw_64/mkspecs/features/default_pre.prf:
@@ -370,7 +371,6 @@ F:/software/QT/6.2.12/mingw_64/lib/Qt6Widgets.prl:
 F:/software/QT/6.2.12/mingw_64/lib/Qt6OpenGL.prl:
 F:/software/QT/6.2.12/mingw_64/lib/Qt6Gui.prl:
 F:/software/QT/6.2.12/mingw_64/lib/Qt6Core.prl:
-.qmake.stash:
 F:/software/QT/6.2.12/mingw_64/mkspecs/features/build_pass.prf:
 ../../glsl.qrc:
 qmake: FORCE

@@ -103,8 +103,6 @@ class Chunk : public Drawable{
 private:
     // All of the blocks contained within this Chunk
     std::array<BlockType, 65536> m_blocks;
-    // The coordinates of the chunk's lower-left corner in world space
-    int minX, minZ;
     // This Chunk's four neighbors to the north, south, east, and west
     // The third input to this map just lets us use a Direction as
     // a key for this map.
@@ -116,6 +114,9 @@ private:
     std::vector<glm::vec4> vboInter;
 
 public:
+    // The coordinates of the chunk's lower-left corner in world space
+    int minX, minZ;
+
     Chunk(int x, int z, OpenGLContext* context);
     BlockType getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z) const;
     BlockType getLocalBlockAt(int x, int y, int z) const;
@@ -131,4 +132,7 @@ public:
     BlockType getAdjacentBlock(int i, int j, int k, const glm::vec3 &dirVec, Chunk *chunk);
     void addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, const glm::vec4 &vertCol, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount);
     void bufferData(const std::vector<glm::vec4> &vertexData, const std::vector<GLuint> &indexData);
+
+    const std::vector<glm::vec4>& getVertexData() const;
+    const std::vector<GLuint>& getIndexData() const;
 };

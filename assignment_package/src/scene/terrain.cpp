@@ -4,6 +4,8 @@
 #include <iostream>
 
 #include <glm/gtc/random.hpp>
+#include "blocktypeworker.h"
+#include "vboworker.h"
 
 Terrain::Terrain(OpenGLContext *context)
     : m_chunks(), m_generatedTerrain(),
@@ -259,9 +261,6 @@ void Terrain::generateBiome(int xMin, int zMin) {
 
     for(int x = xMin; x < xMin + 16; x++) {
         for(int z = zMin; z < zMin + 16; z++) {
-            // This part is commemted out since otherwise
-            // the game will be super lagging. I will uncomment
-            // this part after the multithread in m2 implemented.
             // for (int y = 0; y <= baseHeight; y++) {
             //     setGlobalBlockAt(x, y, z, STONE);
             // }
@@ -296,27 +295,3 @@ void Terrain::generateBiome(int xMin, int zMin) {
         }
     }
 }
-
-void Terrain::updateScene(glm::vec3 pos) {
-    int xFloor = glm::floor(pos.x / 16.f);
-    int zFloor = glm::floor(pos.z / 16.f);
-    int x = 16 * xFloor;
-    int z = 16 * zFloor;
-
-    std::vector<std::pair<int, int>> offsets = {
-        {0, 16}, {16, 0}, {0, -16}, {-16, 0},
-        {16, -16}, {16, 16}, {-16, -16}, {-16, 16}
-    };
-
-    for (const auto& offset : offsets) {
-        int neighborX = x + offset.first;
-        int neighborZ = z + offset.second;
-
-        if (!hasChunkAt(neighborX, neighborZ) || !m_chunks[toKey(neighborX, neighborZ)]) {
-            instantiateChunkAt(neighborX, neighborZ);
-
-            //generateBiome(neighborX, neighborZ);
-        }
-    }
-}
-

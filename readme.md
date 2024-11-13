@@ -43,3 +43,15 @@ For handling key presses, I implemented a system where each detected key changes
 Initially, the player was only blocked by walls two blocks high but could pass through walls one block high. I discovered that when standing on the ground, the player’s actual position along the y-axis was one block higher than it should be, allowing it to pass through shorter walls. I resolved this by moving the player down by one block when standing on the ground.
 
 After completing the milestone, I noticed the game was experiencing lag. The dT (delta time) values varied significantly, ranging from 100 to 600. When dT was large, it caused the player to "fly around" unexpectedly. For example, if the space bar was pressed at frame 0, the player's acceleration.y would increase. If a lag occurred before frame 1, dT could become quite large (e.g., 600), causing the player's velocity to be calculated as acceleration.y * 600, which was not intended. To address this, I clamped the dT values within a certain range to prevent extreme variations and maintain smoother gameplay.
+
+## Milestone 2
+
+### Multithreaded Terrain Generation
+
+#### Implementation
+
+To reduce gameplay interruptions as terrain expands, I implemented multithreading to handle terrain generation tasks off the main thread. I implemented two types of worker threads manage terrain: 1. `BlockTypeWorker`: For ungenerated 64x64 terrain zones near the player, `BlockTypeWorker` threads populate each chunk with biome-specific BlockType data, like grassland or mountain. 2. `VBOWorker`: For existing chunks lacking VBO data, `VBOWorker` threads compute the vertex and index buffers for rendering. I also used `std::mutex`, shared vectors in Terrain store chunk data for processing by worker threads: `dataToBlockTypeWorkerThreads` holds new chunks needing BlockType data. `dataFromBlockTypeWorkerThreads` holds processed chunks, which the main thread transfers to `dataToVBOWorkerThreads`. `dataFromVBOWorkerThreads` stores VBO data from `VBOWorkers` for the main thread to render. In each `tick()`, I identify nearby ungenerated zones, create new chunks, and assign them to `BlockTypeWorkers`. This approach maintains smooth gameplay as the player explores.
+
+#### Difficulties
+
+Initially, race conditions occurred when multiple threads accessed shared vectors simultaneously, causing inconsistent data. Adding `std::mutex` locks around each shared data structure fixed this by ensuring only one thread could access the resource at a time, though it slightly increased processing overhead.

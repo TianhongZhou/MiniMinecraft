@@ -137,3 +137,11 @@ void Chunk::create(int x, int z) {
     createChunkVBOdata(x, z);
     createVBOdata();
 }
+
+const std::vector<glm::vec4>& Chunk::getVertexData() const {
+    return vboInter;
+}
+
+const std::vector<GLuint>& Chunk::getIndexData() const {
+    return idx;
+}

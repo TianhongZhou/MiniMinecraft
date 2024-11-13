@@ -11,6 +11,8 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
 #include <smartpointerhelp.h>
+#include "scene/blocktypeworker.h"
+#include "scene/vboworker.h"
 
 
 class MyGL : public OpenGLContext
