@@ -15,3 +15,5 @@ It cannot change the block there to stone. Also, if I call the setGlobalBlockAt 
 2024.11.06 16:46 : Read more on terrian generation on: https://minecraft.wiki/w/World_generation
 
 2024.11.06 17:09 : Search for fractal noise on: https://devforum.roblox.com/t/creating-procedural-mountains-a-fractal-noise-tutorial/1494362
+
+Milestone2

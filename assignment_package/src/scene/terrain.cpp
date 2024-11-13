@@ -145,8 +145,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
 // TODO: When you make Chunk inherit from Drawable, change this code so
 // it draws each Chunk with the given ShaderProgram
 void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
-    for (int x = minX; x < maxX; x += 16) {
-        for (int z = minZ; z < maxZ; z += 16) {
+    for (int x = minX; x <= maxX; x += 16) {
+        for (int z = minZ; z <= maxZ; z += 16) {
             const uPtr<Chunk> &chunk = getChunkAt(x, z);
             if (!chunk) {
                 continue;
@@ -235,18 +235,19 @@ void Terrain::CreateTestScene()
 
 void Terrain::CreateInitialScene()
 {
-    int xMin = -96, xMax = 96;
-    int zMin = -96, zMax = 96;
+    int xMin = -2, xMax = 2;
+    int zMin = -2, zMax = 2;
 
-    for(int x = xMin; x < xMax; x += 16) {
-        for(int z = zMin; z < zMax; z += 16) {
-            instantiateChunkAt(x, z);
-        }
-    }
+    for (int x = xMin; x <= xMax; x++) {
+        for (int z = zMin; z <= zMax; z++) {
+            m_generatedTerrain.insert(toKey(x * 64, z * 64));
 
-    for (int x = xMin; x < xMax; x+= 16) {
-        for (int z = zMin; z < zMax; z += 16) {
-            generateBiome(x, z);
+            for(int m = x * 64; m < (x + 1) * 64; m += 16) {
+                for(int n = z * 64; n < (z + 1) * 64; n += 16) {
+                    instantiateChunkAt(m, n);
+                    generateBiome(m, n);
+                }
+            }
         }
     }
 }
@@ -314,7 +315,7 @@ void Terrain::updateScene(glm::vec3 pos) {
         if (!hasChunkAt(neighborX, neighborZ) || !m_chunks[toKey(neighborX, neighborZ)]) {
             instantiateChunkAt(neighborX, neighborZ);
 
-            generateBiome(neighborX, neighborZ);
+            //generateBiome(neighborX, neighborZ);
         }
     }
 }

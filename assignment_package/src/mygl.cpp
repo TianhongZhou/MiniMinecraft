@@ -125,6 +125,9 @@ void MyGL::paintGL() {
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
     renderTerrain();
 
     glDisable(GL_DEPTH_TEST);
@@ -147,7 +150,7 @@ void MyGL::renderTerrain() {
     int currZ = glm::floor(currPos.z / 16.f);
     int x = 16 * currX;
     int z = 16 * currZ;
-    m_terrain.draw(x - 96, x + 97, z - 96, z + 97, &m_progLambert);
+    m_terrain.draw(x - 64, x + 64, z - 64, z + 64, &m_progLambert);
 }
 
 
