@@ -57,13 +57,39 @@ BlockType Chunk::getAdjacentBlock(int i, int j, int k, const glm::vec3 &dirVec, 
     return EMPTY;
 }
 
-void Chunk::addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, const glm::vec4 &vertCol, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount) {
-    for (const VertData &v: f.verts) {
+void Chunk::addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, const glm::vec4 &vertCol, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount, BlockType currBlock) {
+    const auto& faceUV = blockUVs.at(currBlock);
+    FaceUV uvCoords;
+
+    if (f.dir == YPOS) {
+        uvCoords = faceUV.top;
+    } else if (f.dir == YNEG) {
+        uvCoords = faceUV.bottom;
+    } else {
+        uvCoords = faceUV.side;
+    }
+
+    for (int i = 0; i < 4; ++i) {
+        const VertData &v = f.verts[i];
         glm::vec4 vertPos = v.pos + blockPos;
+
+        glm::vec2 uv;
+        if (i == 0) {
+            uv = uvCoords.topLeft;
+        } else if (i == 1) {
+            uv = uvCoords.topRight;
+        } else if (i == 2) {
+            uv = uvCoords.bottomRight;
+        } else if (i == 3) {
+            uv = uvCoords.bottomLeft;
+        }
+
         vboInter.push_back(vertPos);
         vboInter.push_back(vertCol);
         vboInter.push_back(glm::vec4(f.dirVec, 0.f));
+        vboInter.push_back(glm::vec4(uv, 0.f, 0.f));
     }
+
     idx.push_back(0 + idxCount);
     idx.push_back(1 + idxCount);
     idx.push_back(2 + idxCount);
@@ -78,7 +104,7 @@ void Chunk::createChunkFaceVBOdata(const BlockFaceData &f, int i, int j, int k, 
     if (adjBlock == EMPTY) {
         glm::vec4 vertCol = block2Color.at(currBlock);
         glm::vec4 blockPos = glm::vec4(i + xChunk, j, k + zChunk, 0.f);
-        addFaceVertices(f, blockPos, vertCol, vboInter, idx, idxCount);
+        addFaceVertices(f, blockPos, vertCol, vboInter, idx, idxCount, currBlock);
     }
 }
 

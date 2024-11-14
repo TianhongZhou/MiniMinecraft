@@ -224,17 +224,22 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
     int handle;
     if ((handle = m_attribs["vs_Pos"]) != -1) {
         context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) 0);
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) 0);
     }
 
     if ((handle = m_attribs["vs_Col"]) != -1) {
         context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) sizeof(glm::vec4));
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) sizeof(glm::vec4));
     }
 
     if ((handle = m_attribs["vs_Nor"]) != -1) {
         context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) (2 * sizeof(glm::vec4)));
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) (2 * sizeof(glm::vec4)));
+    }
+
+    if ((handle = m_attribs["vs_UV"]) != -1) {
+        context->glEnableVertexAttribArray(handle);
+        context->glVertexAttribPointer(handle, 2, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) (3 * sizeof(glm::vec4)));
     }
 
     d.bindBuffer(INDEX);
@@ -243,6 +248,7 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
     if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
     if (m_attribs["vs_Nor"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Nor"]);
     if (m_attribs["vs_Col"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Col"]);
+    if (m_attribs["vs_UV"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_UV"]);
 
     context->printGLErrorLog();
 }
@@ -367,4 +373,10 @@ void ShaderProgram::printLinkInfoLog(int prog)
         qDebug() << "LinkInfoLog:" << "\n" << infoLog << "\n";
         delete [] infoLog;
     }
+}
+
+void ShaderProgram::setSampler(GLuint sampler) {
+    useMe();
+    context->glActiveTexture(GL_TEXTURE0 + sampler);
+    setUnifInt("u_Texture", sampler);
 }

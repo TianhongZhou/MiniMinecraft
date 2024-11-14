@@ -12,6 +12,7 @@
 // position, light position, and vertex color.
 
 uniform vec4 u_Color; // The color with which to render this instance of geometry.
+uniform sampler2D u_Texture;
 
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
@@ -19,22 +20,26 @@ in vec4 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
 in vec4 fs_Col;
+in vec2 fs_UV;
 
 out vec4 out_Col; // This is the final output color that you will see on your
 // screen for the pixel that is currently being processed.
 
 void main()
 {
-    // Material base color (before shading)
-    vec4 diffuseColor = fs_Col;
+    // // Material base color (before shading)
+    // vec4 diffuseColor = fs_Col;
 
-    // Add black lines between blocks (REMOVE WHEN YOU APPLY TEXTURES)
-    bool xBound = fract(fs_Pos.x) < 0.0125 || fract(fs_Pos.x) > 0.9875;
-    bool yBound = fract(fs_Pos.y) < 0.0125 || fract(fs_Pos.y) > 0.9875;
-    bool zBound = fract(fs_Pos.z) < 0.0125 || fract(fs_Pos.z) > 0.9875;
-    if((xBound && yBound) || (xBound && zBound) || (yBound && zBound)) {
-        diffuseColor.rgb = vec3(0,0,0);
-    }
+    // // Add black lines between blocks (REMOVE WHEN YOU APPLY TEXTURES)
+    // bool xBound = fract(fs_Pos.x) < 0.0125 || fract(fs_Pos.x) > 0.9875;
+    // bool yBound = fract(fs_Pos.y) < 0.0125 || fract(fs_Pos.y) > 0.9875;
+    // bool zBound = fract(fs_Pos.z) < 0.0125 || fract(fs_Pos.z) > 0.9875;
+    // if((xBound && yBound) || (xBound && zBound) || (yBound && zBound)) {
+    //     diffuseColor.rgb = vec3(0,0,0);
+    // }
+
+    vec2 uv = fs_UV;
+    vec4 diffuseColor = texture(u_Texture, uv);
 
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));

@@ -15,7 +15,7 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER, SNOW
+    EMPTY, GRASS, DIRT, STONE, WATER, SNOW, LAVA, BEDROCK
 };
 
 // The six cardinal directions in 3D space
@@ -52,35 +52,41 @@ struct BlockFaceData {
 };
 
 const static std::array<BlockFaceData, 6> adjacentF {
-    BlockFaceData(XPOS, glm::vec3(1, 0, 0), VertData(glm::vec4(1, 0, 1, 1)),
-              VertData(glm::vec4(1, 0, 0, 1)),
-              VertData(glm::vec4(1, 1, 0, 1)),
-              VertData(glm::vec4(1, 1, 1, 1))),
+    BlockFaceData(XPOS, glm::vec3(1, 0, 0),
+            VertData(glm::vec4(1, 1, 0, 1)),
+            VertData(glm::vec4(1, 1, 1, 1)),
+            VertData(glm::vec4(1, 0, 1, 1)),
+            VertData(glm::vec4(1, 0, 0, 1))),
 
-    BlockFaceData(XNEG, glm::vec3(-1, 0, 0), VertData(glm::vec4(0, 0, 0, 1)),
-              VertData(glm::vec4(0, 0, 1, 1)),
-              VertData(glm::vec4(0, 1, 1, 1)),
-              VertData(glm::vec4(0, 1, 0, 1))),
+    BlockFaceData(XNEG, glm::vec3(-1, 0, 0),
+            VertData(glm::vec4(0, 1, 1, 1)),
+            VertData(glm::vec4(0, 1, 0, 1)),
+            VertData(glm::vec4(0, 0, 0, 1)),
+            VertData(glm::vec4(0, 0, 1, 1))),
 
-    BlockFaceData(YPOS, glm::vec3(0, 1, 0), VertData(glm::vec4(0, 1, 1, 1)),
-              VertData(glm::vec4(1, 1, 1, 1)),
-              VertData(glm::vec4(1, 1, 0, 1)),
-              VertData(glm::vec4(0, 1, 0, 1))),
+    BlockFaceData(YPOS, glm::vec3(0, 1, 0),
+            VertData(glm::vec4(0, 1, 1, 1)),
+            VertData(glm::vec4(1, 1, 1, 1)),
+            VertData(glm::vec4(1, 1, 0, 1)),
+            VertData(glm::vec4(0, 1, 0, 1))),
 
-    BlockFaceData(YNEG, glm::vec3(0, -1, 0), VertData(glm::vec4(0, 0, 0, 1)),
-              VertData(glm::vec4(1, 0, 0, 1)),
-              VertData(glm::vec4(1, 0, 1, 1)),
-              VertData(glm::vec4(0, 0, 1, 1))),
+    BlockFaceData(YNEG, glm::vec3(0, -1, 0),
+            VertData(glm::vec4(0, 0, 0, 1)),
+            VertData(glm::vec4(1, 0, 0, 1)),
+            VertData(glm::vec4(1, 0, 1, 1)),
+            VertData(glm::vec4(0, 0, 1, 1))),
 
-    BlockFaceData(ZPOS, glm::vec3(0, 0, 1), VertData(glm::vec4(0, 1, 1, 1)),
-              VertData(glm::vec4(0, 0, 1, 1)),
-              VertData(glm::vec4(1, 0, 1, 1)),
-              VertData(glm::vec4(1, 1, 1, 1))),
+    BlockFaceData(ZPOS, glm::vec3(0, 0, 1),
+            VertData(glm::vec4(1, 1, 1, 1)),
+            VertData(glm::vec4(0, 1, 1, 1)),
+            VertData(glm::vec4(0, 0, 1, 1)),
+            VertData(glm::vec4(1, 0, 1, 1))),
 
-    BlockFaceData(ZNEG, glm::vec3(0, 0, -1), VertData(glm::vec4(1, 1, 0, 1)),
-              VertData(glm::vec4(1, 0, 0, 1)),
-              VertData(glm::vec4(0, 0, 0, 1)),
-              VertData(glm::vec4(0, 1, 0, 1)))
+    BlockFaceData(ZNEG, glm::vec3(0, 0, -1),
+            VertData(glm::vec4(0, 1, 0, 1)),
+            VertData(glm::vec4(1, 1, 0, 1)),
+            VertData(glm::vec4(1, 0, 0, 1)),
+            VertData(glm::vec4(0, 0, 0, 1)))
 };
 
 const static std::unordered_map<BlockType, glm::vec4, EnumHash> block2Color = {
@@ -88,7 +94,130 @@ const static std::unordered_map<BlockType, glm::vec4, EnumHash> block2Color = {
     {DIRT, glm::vec4(glm::vec3(121.f, 85.f, 58.f) / 255.f, 1.f)},
     {STONE, glm::vec4(0.5f, 0.5f, 0.5f, 1.f)},
     {WATER, glm::vec4(0.f, 0.f, 0.75f, 1.f)},
-    {SNOW, glm::vec4(1.f, 1.f, 1.f, 1.f)}
+    {SNOW, glm::vec4(1.f, 1.f, 1.f, 1.f)},
+    {LAVA, glm::vec4(1.f, 0.f, 0.f, 1.f)},
+    {BEDROCK, glm::vec4(0.f, 0.f, 0.f, 1.f)}
+};
+
+struct FaceUV {
+    glm::vec2 topLeft;
+    glm::vec2 topRight;
+    glm::vec2 bottomLeft;
+    glm::vec2 bottomRight;
+};
+
+struct BlockUVData {
+    FaceUV top;
+    FaceUV bottom;
+    FaceUV side;
+};
+
+const static std::unordered_map<BlockType, BlockUVData, EnumHash> blockUVs = {
+    {GRASS, BlockUVData{
+                {
+                    glm::vec2(8.f / 16.f, 14.f / 16.f), glm::vec2(9.f / 16.f, 14.f / 16.f),
+                    glm::vec2(8.f / 16.f, 13.f / 16.f), glm::vec2(9.f / 16.f, 13.f / 16.f)
+                },
+                {
+                    glm::vec2(2.f / 16.f, 16.f / 16.f), glm::vec2(3.f / 16.f, 16.f / 16.f),
+                    glm::vec2(2.f / 16.f, 15.f / 16.f), glm::vec2(3.f / 16.f, 15.f / 16.f)
+                },
+                {
+                    glm::vec2(3.f / 16.f, 16.f / 16.f), glm::vec2(4.f / 16.f, 16.f / 16.f),
+                    glm::vec2(3.f / 16.f, 15.f / 16.f), glm::vec2(4.f / 16.f, 15.f / 16.f)
+                }
+            }
+    },
+    {DIRT, BlockUVData{
+               {
+                   glm::vec2(2.f / 16.f, 16.f / 16.f), glm::vec2(3.f / 16.f, 16.f / 16.f),
+                   glm::vec2(2.f / 16.f, 15.f / 16.f), glm::vec2(3.f / 16.f, 15.f / 16.f)
+               },
+               {
+                   glm::vec2(2.f / 16.f, 16.f / 16.f), glm::vec2(3.f / 16.f, 16.f / 16.f),
+                   glm::vec2(2.f / 16.f, 15.f / 16.f), glm::vec2(3.f / 16.f, 15.f / 16.f)
+               },
+               {
+                   glm::vec2(2.f / 16.f, 16.f / 16.f), glm::vec2(3.f / 16.f, 16.f / 16.f),
+                   glm::vec2(2.f / 16.f, 15.f / 16.f), glm::vec2(3.f / 16.f, 15.f / 16.f)
+               }
+           }
+    },
+    {STONE, BlockUVData{
+                {
+                    glm::vec2(1.f / 16.f, 16.f / 16.f), glm::vec2(2.f / 16.f, 16.f / 16.f),
+                    glm::vec2(1.f / 16.f, 15.f / 16.f), glm::vec2(2.f / 16.f, 15.f / 16.f)
+                },
+                {
+                    glm::vec2(1.f / 16.f, 16.f / 16.f), glm::vec2(2.f / 16.f, 16.f / 16.f),
+                    glm::vec2(1.f / 16.f, 15.f / 16.f), glm::vec2(2.f / 16.f, 15.f / 16.f)
+                },
+                {
+                    glm::vec2(1.f / 16.f, 16.f / 16.f), glm::vec2(2.f / 16.f, 16.f / 16.f),
+                    glm::vec2(1.f / 16.f, 15.f / 16.f), glm::vec2(2.f / 16.f, 15.f / 16.f)
+                }
+            }
+    },
+    {WATER, BlockUVData{
+                {
+                    glm::vec2(13.f / 16.f, 4.f / 16.f), glm::vec2(14.f / 16.f, 4.f / 16.f),
+                    glm::vec2(13.f / 16.f, 3.f / 16.f), glm::vec2(14.f / 16.f, 3.f / 16.f)
+                },
+                {
+                    glm::vec2(13.f / 16.f, 4.f / 16.f), glm::vec2(14.f / 16.f, 4.f / 16.f),
+                    glm::vec2(13.f / 16.f, 3.f / 16.f), glm::vec2(14.f / 16.f, 3.f / 16.f)
+                },
+                {
+                    glm::vec2(13.f / 16.f, 4.f / 16.f), glm::vec2(14.f / 16.f, 4.f / 16.f),
+                    glm::vec2(13.f / 16.f, 3.f / 16.f), glm::vec2(14.f / 16.f, 3.f / 16.f)
+                }
+            }
+    },
+    {SNOW, BlockUVData{
+               {
+                   glm::vec2(2.f / 16.f, 12.f / 16.f), glm::vec2(3.f / 16.f, 12.f / 16.f),
+                   glm::vec2(2.f / 16.f, 11.f / 16.f), glm::vec2(3.f / 16.f, 11.f / 16.f)
+               },
+               {
+                   glm::vec2(2.f / 16.f, 12.f / 16.f), glm::vec2(3.f / 16.f, 12.f / 16.f),
+                   glm::vec2(2.f / 16.f, 11.f / 16.f), glm::vec2(3.f / 16.f, 11.f / 16.f)
+               },
+               {
+                   glm::vec2(2.f / 16.f, 12.f / 16.f), glm::vec2(3.f / 16.f, 12.f / 16.f),
+                   glm::vec2(2.f / 16.f, 11.f / 16.f), glm::vec2(3.f / 16.f, 11.f / 16.f)
+               }
+           }
+    },
+    {LAVA, BlockUVData{
+               {
+                   glm::vec2(13.f / 16.f, 2.f / 16.f), glm::vec2(14.f / 16.f, 2.f / 16.f),
+                   glm::vec2(13.f / 16.f, 1.f / 16.f), glm::vec2(14.f / 16.f, 1.f / 16.f)
+               },
+               {
+                   glm::vec2(13.f / 16.f, 2.f / 16.f), glm::vec2(14.f / 16.f, 2.f / 16.f),
+                   glm::vec2(13.f / 16.f, 1.f / 16.f), glm::vec2(14.f / 16.f, 1.f / 16.f)
+               },
+               {
+                   glm::vec2(13.f / 16.f, 2.f / 16.f), glm::vec2(14.f / 16.f, 2.f / 16.f),
+                   glm::vec2(13.f / 16.f, 1.f / 16.f), glm::vec2(14.f / 16.f, 1.f / 16.f)
+               }
+           }
+    },
+    {BEDROCK, BlockUVData{
+                  {
+                      glm::vec2(1.f / 16.f, 15.f / 16.f), glm::vec2(2.f / 16.f, 15.f / 16.f),
+                      glm::vec2(1.f / 16.f, 14.f / 16.f), glm::vec2(2.f / 16.f, 14.f / 16.f)
+                  },
+                  {
+                      glm::vec2(1.f / 16.f, 15.f / 16.f), glm::vec2(2.f / 16.f, 15.f / 16.f),
+                      glm::vec2(1.f / 16.f, 14.f / 16.f), glm::vec2(2.f / 16.f, 14.f / 16.f)
+                  },
+                  {
+                      glm::vec2(1.f / 16.f, 15.f / 16.f), glm::vec2(2.f / 16.f, 15.f / 16.f),
+                      glm::vec2(1.f / 16.f, 14.f / 16.f), glm::vec2(2.f / 16.f, 14.f / 16.f)
+                  }
+              }
+    }
 };
 
 // One Chunk is a 16 x 256 x 16 section of the world,
@@ -130,7 +259,7 @@ public:
 
     void createChunkFaceVBOdata(const BlockFaceData &f, int i, int j, int k, int xChunk, int zChunk, BlockType currBlock, Chunk* chunk, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount);
     BlockType getAdjacentBlock(int i, int j, int k, const glm::vec3 &dirVec, Chunk *chunk);
-    void addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, const glm::vec4 &vertCol, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount);
+    void addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, const glm::vec4 &vertCol, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount, BlockType currBlock);
     void bufferData(const std::vector<glm::vec4> &vertexData, const std::vector<GLuint> &indexData);
 
     const std::vector<glm::vec4>& getVertexData() const;

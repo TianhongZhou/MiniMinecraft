@@ -41,6 +41,7 @@ private:
                               // your mouse stays within the screen bounds and is always read.
 
     void sendPlayerDataToGUI() const;
+    GLuint m_texture;
 
 
 public:

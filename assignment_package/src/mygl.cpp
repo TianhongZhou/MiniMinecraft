@@ -73,9 +73,23 @@ void MyGL::initializeGL()
 
     std::thread blockTypeWorker(&BlockTypeWorker::operator(), BlockTypeWorker(&m_terrain));
     blockTypeWorker.detach();
-
     std::thread vboWorker(&VBOWorker::operator(), VBOWorker(&m_terrain));
     vboWorker.detach();
+
+    glGenTextures(1, &m_texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    QString texturePath = "../textures/minecraft_textures_all.png";
+    QImage img(texturePath);
+    img = (img.convertToFormat(QImage::Format_RGBA8888)).mirrored();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+
+    m_progLambert.setSampler(0);
 }
 
 
@@ -189,6 +203,9 @@ void MyGL::paintGL() {
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
 void MyGL::renderTerrain() {
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+    glActiveTexture(GL_TEXTURE0);
+
     glm::vec3 currPos = m_player.mcr_position;
     int currX = glm::floor(currPos.x / 16.f);
     int currZ = glm::floor(currPos.z / 16.f);
