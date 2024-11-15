@@ -13,4 +13,6 @@ struct MutexPair {
 struct ChunkVBOdata {
     std::vector<glm::vec4> vertexData;
     std::vector<GLuint> indexData;
+    std::vector<glm::vec4> opaqueVertexData, transparentVertexData;
+    std::vector<GLuint> opaqueIndexData, transparentIndexData;
 };

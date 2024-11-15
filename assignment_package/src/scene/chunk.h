@@ -246,6 +246,12 @@ public:
     // The coordinates of the chunk's lower-left corner in world space
     int minX, minZ;
 
+    int idxCountOpaque = 0;
+    int idxCountTransparent = 0;
+
+    std::vector<glm::vec4> vboOpaque, vboTransparent;
+    std::vector<GLuint> idxOpaque, idxTransparent;
+
     Chunk(int x, int z, OpenGLContext* context);
     BlockType getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z) const;
     BlockType getLocalBlockAt(int x, int y, int z) const;
@@ -257,11 +263,13 @@ public:
     void destroyVBOdata() override;
     void create(int x, int z);
 
-    void createChunkFaceVBOdata(const BlockFaceData &f, int i, int j, int k, int xChunk, int zChunk, BlockType currBlock, Chunk* chunk, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount);
     BlockType getAdjacentBlock(int i, int j, int k, const glm::vec3 &dirVec, Chunk *chunk);
     void addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, const glm::vec4 &vertCol, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount, BlockType currBlock);
-    void bufferData(const std::vector<glm::vec4> &vertexData, const std::vector<GLuint> &indexData);
+    void bufferData(const std::vector<glm::vec4> &vertexData, const std::vector<GLuint> &indexData, BufferType indexType);
 
     const std::vector<glm::vec4>& getVertexData() const;
     const std::vector<GLuint>& getIndexData() const;
+
+    void bufferOpaqueData();
+    void bufferTransparentData();
 };

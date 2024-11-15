@@ -48,7 +48,7 @@ public:
     // Draw the given object to our screen using this ShaderProgram's shaders
     void draw(Drawable &d);
     void drawInstanced(InstancedDrawable &d);
-    void drawInterleaved(Drawable &d);
+    void drawInterleaved(Drawable &d, BufferType indexType);
     // Utility function used in create()
     char* textFileRead(const char*);
     // Utility function that prints any shader compilation errors to the console

@@ -149,12 +149,27 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
 void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
     for (int x = minX; x <= maxX; x += 16) {
         for (int z = minZ; z <= maxZ; z += 16) {
-            const uPtr<Chunk> &chunk = getChunkAt(x, z);
-            if (!chunk) {
-                continue;
+            const uPtr<Chunk>& chunk = getChunkAt(x, z);
+            if (!chunk) continue;
+
+            chunk->createChunkVBOdata(x, z);
+
+            if (chunk->idxCountOpaque > 0) {
+                chunk->bufferOpaqueData();
+                shaderProgram->drawInterleaved(*chunk, OPAQUE_INDEX);
             }
-            chunk->create(x, z);
-            shaderProgram->drawInterleaved(*chunk);
+        }
+    }
+
+    for (int x = minX; x <= maxX; x += 16) {
+        for (int z = minZ; z <= maxZ; z += 16) {
+            const uPtr<Chunk>& chunk = getChunkAt(x, z);
+            if (!chunk) continue;
+
+            if (chunk->idxCountTransparent > 0) {
+                chunk->bufferTransparentData();
+                shaderProgram->drawInterleaved(*chunk, TRANSPARENT_INDEX);
+            }
         }
     }
 }
@@ -261,6 +276,12 @@ void Terrain::generateBiome(int xMin, int zMin) {
 
     for(int x = xMin; x < xMin + 16; x++) {
         for(int z = zMin; z < zMin + 16; z++) {
+            for (int y = baseHeight - 1; y <= baseHeight; y++) {
+                setGlobalBlockAt(x, y, z, STONE);
+            }
+
+            // Commented out for other parts to run smoothly
+            // Need to be uncommented for showing cave sys
             // for (int y = 0; y <= baseHeight; y++) {
             //     setGlobalBlockAt(x, y, z, STONE);
             // }

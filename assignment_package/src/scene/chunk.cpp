@@ -109,39 +109,53 @@ void Chunk::addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, c
     idxCount += 4;
 }
 
-void Chunk::createChunkFaceVBOdata(const BlockFaceData &f, int i, int j, int k, int xChunk, int zChunk, BlockType currBlock, Chunk* chunk, std::vector<glm::vec4> &vboInter, std::vector<GLuint> &idx, int &idxCount) {
-    BlockType adjBlock = getAdjacentBlock(i, j, k, f.dirVec, chunk);
-    if (adjBlock == EMPTY) {
-        glm::vec4 vertCol = block2Color.at(currBlock);
-        glm::vec4 blockPos = glm::vec4(i + xChunk, j, k + zChunk, 0.f);
-        addFaceVertices(f, blockPos, vertCol, vboInter, idx, idxCount, currBlock);
-    }
-}
-
 void Chunk::createChunkVBOdata(int xChunk, int zChunk) {
-    idxCount = 0;
-    idx.clear();
-    vboInter.clear();
+    idxCountOpaque = 0;
+    idxCountTransparent = 0;
+    idxOpaque.clear();
+    idxTransparent.clear();
+    vboOpaque.clear();
+    vboTransparent.clear();
 
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 16; k++) {
                 BlockType currBlock = this->getLocalBlockAt(i, j, k);
-
                 if (currBlock != EMPTY) {
-                    for (const BlockFaceData &f: adjacentF) {
-                        createChunkFaceVBOdata(f, i, j, k, xChunk, zChunk, currBlock, this, vboInter, idx, idxCount);
+                    for (const BlockFaceData &f : adjacentF) {
+                        BlockType adjBlock = getAdjacentBlock(i, j, k, f.dirVec, this);
+                        if (adjBlock == EMPTY || (adjBlock == WATER && currBlock != WATER)) {
+                            glm::vec4 blockPos(i + xChunk, j, k + zChunk, 0.f);
+                            glm::vec4 vertCol = block2Color.at(currBlock);
+                            if (currBlock == WATER) {
+                                addFaceVertices(f, blockPos, vertCol, vboTransparent, idxTransparent, idxCountTransparent, currBlock);
+                            } else {
+                                addFaceVertices(f, blockPos, vertCol, vboOpaque, idxOpaque, idxCountOpaque, currBlock);
+                            }
+
+                        }
                     }
                 }
             }
         }
     }
-    this->indexCounts[INDEX] = idx.size();
+    this->indexCounts[OPAQUE_INDEX] = idxOpaque.size();
+    this->indexCounts[TRANSPARENT_INDEX] = idxTransparent.size();
+    idxCountOpaque = idxOpaque.size();
+    idxCountTransparent = idxTransparent.size();
 }
 
-void Chunk::bufferData(const std::vector<glm::vec4> &vertexData, const std::vector<GLuint> &indexData) {
-    generateBuffer(INDEX);
-    mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufHandles[INDEX]);
+void Chunk::bufferOpaqueData() {
+    bufferData(vboOpaque, idxOpaque, OPAQUE_INDEX);
+}
+
+void Chunk::bufferTransparentData() {
+    bufferData(vboTransparent, idxTransparent, TRANSPARENT_INDEX);
+}
+
+void Chunk::bufferData(const std::vector<glm::vec4> &vertexData, const std::vector<GLuint> &indexData, BufferType indexType) {
+    generateBuffer(indexType);
+    mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufHandles[indexType]);
     mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexData.size() * sizeof(GLuint), indexData.data(), GL_STATIC_DRAW);
 
     generateBuffer(INTERLEAVED);
@@ -150,7 +164,7 @@ void Chunk::bufferData(const std::vector<glm::vec4> &vertexData, const std::vect
 }
 
 void Chunk::createVBOdata() {
-    bufferData(vboInter, idx);
+    bufferData(vboInter, idx, INDEX);
 }
 
 void Chunk::destroyVBOdata() {
@@ -171,7 +185,8 @@ void Chunk::destroyVBOdata() {
 
 void Chunk::create(int x, int z) {
     createChunkVBOdata(x, z);
-    createVBOdata();
+    bufferOpaqueData();
+    bufferTransparentData();
 }
 
 const std::vector<glm::vec4>& Chunk::getVertexData() const {

@@ -16,7 +16,6 @@ void Player::tick(float dT, InputBundle &input) {
     dT = glm::clamp(dT, 0.f, 100.f);
     processInputs(input);
     computePhysics(dT, mcr_terrain);
-    updateFacingBlock();
 }
 
 void Player::updateFacingBlock() {

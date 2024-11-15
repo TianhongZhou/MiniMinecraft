@@ -212,8 +212,8 @@ void ShaderProgram::draw(Drawable &d) {
     context->printGLErrorLog();
 }
 
-void ShaderProgram::drawInterleaved(Drawable &d) {
-    if (d.elemCount(INDEX) < 0) {
+void ShaderProgram::drawInterleaved(Drawable &d, BufferType indexType) {
+    if (d.elemCount(indexType) < 0) {
         throw std::invalid_argument(
             "Attempting to draw a Drawable that has not initialized its count variable! Remember to set it to the length of your index array in create()."
             );
@@ -242,8 +242,8 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
         context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) (3 * sizeof(glm::vec4)));
     }
 
-    d.bindBuffer(INDEX);
-    context->glDrawElements(d.drawMode(), d.elemCount(INDEX), GL_UNSIGNED_INT, 0);
+    d.bindBuffer(indexType);
+    context->glDrawElements(d.drawMode(), d.elemCount(indexType), GL_UNSIGNED_INT, 0);
 
     if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
     if (m_attribs["vs_Nor"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Nor"]);

@@ -24,7 +24,9 @@ void VBOWorker::operator()() {
 }
 
 void VBOWorker::generateVBOData(Chunk* chunk, ChunkVBOdata& vboData) {
-    chunk->create(chunk->minX, chunk->minZ);
-    vboData.vertexData = chunk->getVertexData();
-    vboData.indexData = chunk->getIndexData();
+    chunk->createChunkVBOdata(chunk->minX, chunk->minZ);
+    vboData.opaqueVertexData = chunk->vboOpaque;
+    vboData.opaqueIndexData = chunk->idxOpaque;
+    vboData.transparentVertexData = chunk->vboTransparent;
+    vboData.transparentIndexData = chunk->idxTransparent;
 }
