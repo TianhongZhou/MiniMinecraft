@@ -239,7 +239,7 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
 
     if ((handle = m_attribs["vs_UV"]) != -1) {
         context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 2, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) (3 * sizeof(glm::vec4)));
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) (3 * sizeof(glm::vec4)));
     }
 
     d.bindBuffer(INDEX);

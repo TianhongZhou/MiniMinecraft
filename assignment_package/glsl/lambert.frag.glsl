@@ -13,6 +13,7 @@
 
 uniform vec4 u_Color; // The color with which to render this instance of geometry.
 uniform sampler2D u_Texture;
+uniform float u_Time;
 
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
@@ -21,6 +22,7 @@ in vec4 fs_Nor;
 in vec4 fs_LightVec;
 in vec4 fs_Col;
 in vec2 fs_UV;
+in float fs_IsAnimating;
 
 out vec4 out_Col; // This is the final output color that you will see on your
 // screen for the pixel that is currently being processed.
@@ -39,6 +41,11 @@ void main()
     // }
 
     vec2 uv = fs_UV;
+
+    if (fs_IsAnimating > 0.5) {
+        float speed = 80.0;
+        uv.x += mod(u_Time, speed / 16.0) / speed;
+    }
     vec4 diffuseColor = texture(u_Texture, uv);
 
     // Calculate the diffuse term for Lambert shading

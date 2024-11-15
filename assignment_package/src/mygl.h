@@ -42,6 +42,7 @@ private:
 
     void sendPlayerDataToGUI() const;
     GLuint m_texture;
+    float m_time;
 
 
 public:

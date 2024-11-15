@@ -13,8 +13,8 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 180.f, 48.f), m_terrain),
-      lastT(QDateTime::currentMSecsSinceEpoch()), input(*mkU<InputBundle>())
+      m_terrain(this), m_player(glm::vec3(48.f, 180.f, 48.f), m_terrain), lastT(QDateTime::currentMSecsSinceEpoch()),
+      input(*mkU<InputBundle>()), m_time(0.f)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -185,6 +185,8 @@ void MyGL::paintGL() {
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+
+    m_progLambert.setUnifFloat("u_Time", m_time++);
 
     renderTerrain();
 

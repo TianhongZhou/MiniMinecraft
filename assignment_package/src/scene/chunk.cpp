@@ -43,14 +43,22 @@ BlockType Chunk::getAdjacentBlock(int i, int j, int k, const glm::vec3 &dirVec, 
     glm::vec3 testBorder = glm::vec3(i, j, k) + dirVec;
     if (testBorder.x >= 16.f || testBorder.y >= 256.f || testBorder.z >= 16.f ||
         testBorder.x < 0.f || testBorder.y < 0.f || testBorder.z < 0.f) {
-        // Chunk* adjChunk = chunk->m_neighbors[Direction(int(dirVec.x + dirVec.y + dirVec.z))];
-        // if (adjChunk != nullptr) {
-        //     int dx = (16 + i + int(dirVec.x)) % 16;
-        //     int dy = (256 + j + int(dirVec.y)) % 256;
-        //     int dz = (16 + k + int(dirVec.z)) % 16;
-        //     return adjChunk->getLocalBlockAt(dx, dy, dz);
-        // }
-        return EMPTY;
+        Direction dir;
+        if (dirVec.x > 0) dir = XPOS;
+        else if (dirVec.x < 0) dir = XNEG;
+        else if (dirVec.y > 0) dir = YPOS;
+        else if (dirVec.y < 0) dir = YNEG;
+        else if (dirVec.z > 0) dir = ZPOS;
+        else if (dirVec.z < 0) dir = ZNEG;
+
+        Chunk* adjChunk = chunk->m_neighbors[dir];
+        if (adjChunk != nullptr) {
+            int dx = (dir == XPOS) ? 0 : (dir == XNEG) ? 15 : i;
+            int dy = (dir == YPOS) ? 0 : (dir == YNEG) ? 255 : j;
+            int dz = (dir == ZPOS) ? 0 : (dir == ZNEG) ? 15 : k;
+
+            return adjChunk->getLocalBlockAt(dx, dy, dz);
+        }
     } else {
         return chunk->getLocalBlockAt(i + int(dirVec.x), j + int(dirVec.y), k + int(dirVec.z));
     }
@@ -68,6 +76,8 @@ void Chunk::addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, c
     } else {
         uvCoords = faceUV.side;
     }
+
+    float isAnimating = (currBlock == LAVA || currBlock == WATER) ? 1.0f : 0.0f;
 
     for (int i = 0; i < 4; ++i) {
         const VertData &v = f.verts[i];
@@ -87,7 +97,7 @@ void Chunk::addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, c
         vboInter.push_back(vertPos);
         vboInter.push_back(vertCol);
         vboInter.push_back(glm::vec4(f.dirVec, 0.f));
-        vboInter.push_back(glm::vec4(uv, 0.f, 0.f));
+        vboInter.push_back(glm::vec4(uv, isAnimating, 0.f));
     }
 
     idx.push_back(0 + idxCount);
