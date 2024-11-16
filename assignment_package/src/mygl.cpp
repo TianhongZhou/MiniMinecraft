@@ -121,41 +121,41 @@ void MyGL::tick() {
     lastT = QDateTime::currentMSecsSinceEpoch();
     m_player.tick(dt, input);
 
-    // // Expand terrain if needed
-    // glm::vec3 playerPos = m_player.mcr_position;
-    // int xCenter = glm::floor(playerPos.x / 64) * 64;
-    // int zCenter = glm::floor(playerPos.z / 64) * 64;
+    // Expand terrain if needed
+    glm::vec3 playerPos = m_player.mcr_position;
+    int xCenter = glm::floor(playerPos.x / 64) * 64;
+    int zCenter = glm::floor(playerPos.z / 64) * 64;
 
-    // std::lock_guard<std::mutex> lock(m_terrain.dataToBlockTypeWorkerThreadsMutex);
+    std::lock_guard<std::mutex> lock(m_terrain.dataToBlockTypeWorkerThreadsMutex);
 
-    // for (int xOffset = -128; xOffset <= 128; xOffset += 64) {
-    //     for (int zOffset = -128; zOffset <= 128; zOffset += 64) {
-    //         int x = xCenter + xOffset;
-    //         int z = zCenter + zOffset;
+    for (int xOffset = -128; xOffset <= 128; xOffset += 64) {
+        for (int zOffset = -128; zOffset <= 128; zOffset += 64) {
+            int x = xCenter + xOffset;
+            int z = zCenter + zOffset;
 
-    //         if (m_terrain.m_generatedTerrain.find(toKey(x, z)) == m_terrain.m_generatedTerrain.end()) {
-    //             m_terrain.m_generatedTerrain.insert(toKey(x, z));
+            if (m_terrain.m_generatedTerrain.find(toKey(x, z)) == m_terrain.m_generatedTerrain.end()) {
+                m_terrain.m_generatedTerrain.insert(toKey(x, z));
 
-    //             for (int dx = 0; dx < 64; dx += 16) {
-    //                 for (int dz = 0; dz < 64; dz += 16) {
-    //                     int chunkX = x + dx;
-    //                     int chunkZ = z + dz;
+                for (int dx = 0; dx < 64; dx += 16) {
+                    for (int dz = 0; dz < 64; dz += 16) {
+                        int chunkX = x + dx;
+                        int chunkZ = z + dz;
 
-    //                     Chunk* newChunk = m_terrain.instantiateChunkAt(chunkX, chunkZ);
-    //                     m_terrain.dataToBlockTypeWorkerThreads.push_back(newChunk);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+                        Chunk* newChunk = m_terrain.instantiateChunkAt(chunkX, chunkZ);
+                        m_terrain.dataToBlockTypeWorkerThreads.push_back(newChunk);
+                    }
+                }
+            }
+        }
+    }
 
-    // std::lock_guard<std::mutex> lock2(m_terrain.dataFromBlockTypeWorkerThreads.lockForResource);
-    // if (!m_terrain.dataFromBlockTypeWorkerThreads.sharedResource.empty()) {
-    //     for (Chunk* processedChunk : m_terrain.dataFromBlockTypeWorkerThreads.sharedResource) {
-    //         m_terrain.dataToVBOWorkerThreads.push_back(processedChunk);
-    //     }
-    //     m_terrain.dataFromBlockTypeWorkerThreads.sharedResource.clear();
-    // }
+    std::lock_guard<std::mutex> lock2(m_terrain.dataFromBlockTypeWorkerThreads.lockForResource);
+    if (!m_terrain.dataFromBlockTypeWorkerThreads.sharedResource.empty()) {
+        for (Chunk* processedChunk : m_terrain.dataFromBlockTypeWorkerThreads.sharedResource) {
+            m_terrain.dataToVBOWorkerThreads.push_back(processedChunk);
+        }
+        m_terrain.dataFromBlockTypeWorkerThreads.sharedResource.clear();
+    }
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data

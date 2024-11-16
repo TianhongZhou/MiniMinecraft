@@ -110,6 +110,8 @@ void Chunk::addFaceVertices(const BlockFaceData &f, const glm::vec4 &blockPos, c
 }
 
 void Chunk::createChunkVBOdata(int xChunk, int zChunk) {
+    destroyVBOdata();
+
     idxCountOpaque = 0;
     idxCountTransparent = 0;
     idxOpaque.clear();
@@ -154,9 +156,19 @@ void Chunk::bufferTransparentData() {
 }
 
 void Chunk::bufferData(const std::vector<glm::vec4> &vertexData, const std::vector<GLuint> &indexData, BufferType indexType) {
+    if (bufGenerated[indexType]) {
+        mp_context->glDeleteBuffers(1, &bufHandles[indexType]);
+        bufGenerated[indexType] = false;
+    }
+
     generateBuffer(indexType);
     mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufHandles[indexType]);
     mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexData.size() * sizeof(GLuint), indexData.data(), GL_STATIC_DRAW);
+
+    if (bufGenerated[INTERLEAVED]) {
+        mp_context->glDeleteBuffers(1, &bufHandles[INTERLEAVED]);
+        bufGenerated[INTERLEAVED] = false;
+    }
 
     generateBuffer(INTERLEAVED);
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, bufHandles[INTERLEAVED]);
@@ -168,6 +180,16 @@ void Chunk::createVBOdata() {
 }
 
 void Chunk::destroyVBOdata() {
+    if (bufGenerated[OPAQUE_INDEX]) {
+        mp_context->glDeleteBuffers(1, &bufHandles[OPAQUE_INDEX]);
+        bufGenerated[OPAQUE_INDEX] = false;
+    }
+
+    if (bufGenerated[TRANSPARENT_INDEX]) {
+        mp_context->glDeleteBuffers(1, &bufHandles[TRANSPARENT_INDEX]);
+        bufGenerated[TRANSPARENT_INDEX] = false;
+    }
+
     if (bufGenerated[INTERLEAVED]) {
         mp_context->glDeleteBuffers(1, &bufHandles[INTERLEAVED]);
         bufGenerated[INTERLEAVED] = false;
@@ -181,6 +203,11 @@ void Chunk::destroyVBOdata() {
     bufHandles.clear();
     bufGenerated.clear();
     indexCounts.clear();
+
+    vboOpaque.clear();
+    vboTransparent.clear();
+    idxOpaque.clear();
+    idxTransparent.clear();
 }
 
 void Chunk::create(int x, int z) {

@@ -35,8 +35,8 @@ void Player::updateFacingBlock() {
 void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
-    rotateOnUpGlobal(-inputs.mouseX / 5.f);
-    rotateOnRightLocal(-inputs.mouseY / 5.f);
+    rotateOnUpGlobal(-inputs.mouseX / 10.f);
+    rotateOnRightLocal(-inputs.mouseY / 10.f);
     inputs.mouseX = 0.f;
     inputs.mouseY = 0.f;
 
@@ -151,21 +151,23 @@ void Player::computePhysics(float dT, const Terrain &terrain, InputBundle &input
         glm::vec3(0.5f, 2.f, 0.5f),  glm::vec3(-0.5f, 2.f, 0.5f)
     };
 
-    for (glm::vec3 vertex : vertices) {
-        glm::vec3 rayOrigin = vertex + m_position;
-        for (int axis = 0; axis < 3; axis++) {
-            glm::vec3 rayDirection = glm::vec3(0);
+    for (auto& vertex : vertices) {
+        auto rayOrigin = vertex + m_position;
+        for (int axis = 0; axis < 3; ++axis) {
+            glm::vec3 rayDirection(0.0f);
             rayDirection[axis] = movement[axis];
-            float outdist;
-            glm::ivec3 out_blockHit;
-            bool isBlocked = gridMarch(rayOrigin, rayDirection, mcr_terrain, &outdist, &out_blockHit);
-            if (isBlocked) {
-                if (outdist > 0.001f) {
-                    movement[axis] = glm::sign(movement[axis]) * (std::fmax(glm::min(glm::abs(movement[axis]), outdist) - 0.0001f, 0));
+
+            float hitDistance = 0.0f;
+            glm::ivec3 hitBlock;
+            bool blocked = gridMarch(rayOrigin, rayDirection, mcr_terrain, &hitDistance, &hitBlock);
+
+            if (blocked) {
+                if (hitDistance > 0.001f) {
+                    movement[axis] = glm::sign(movement[axis]) * (std::max(std::min(std::abs(movement[axis]), hitDistance) - 0.0001f, 0.0f));
                 } else {
-                    movement[axis] = 0;
+                    movement[axis] = 0.0f;
                 }
-                m_velocity[axis] = 0;
+                m_velocity[axis] = 0.0f;
             }
         }
     }

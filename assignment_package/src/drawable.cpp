@@ -21,6 +21,8 @@ void Drawable::destroyVBOdata() {
     for(auto &kvp : bufHandles) {
         mp_context->glDeleteBuffers(1, &(kvp.second));
     }
+    bufHandles.clear();
+    bufGenerated.clear();
 }
 
 GLenum Drawable::drawMode() {
