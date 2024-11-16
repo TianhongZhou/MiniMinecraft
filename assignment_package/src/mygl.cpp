@@ -256,6 +256,10 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
     if (e->key() == Qt::Key_Space && !e->isAutoRepeat()) {
         input.spacePressed = true;
     }
+
+    if (e->key() == Qt::Key_Space) {
+        input.spaceHold = true;
+    }
 }
 
 void MyGL::keyReleaseEvent(QKeyEvent *e) {
@@ -289,6 +293,10 @@ void MyGL::keyReleaseEvent(QKeyEvent *e) {
 
     if (e->key() == Qt::Key_Space && !e->isAutoRepeat()) {
         input.spacePressed = false;
+    }
+
+    if (e->key() == Qt::Key_Space) {
+        input.spaceHold = false;
     }
 }
 

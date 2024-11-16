@@ -15,7 +15,7 @@ Player::~Player()
 void Player::tick(float dT, InputBundle &input) {
     dT = glm::clamp(dT, 0.f, 100.f);
     processInputs(input);
-    computePhysics(dT, mcr_terrain);
+    computePhysics(dT, mcr_terrain, input);
 }
 
 void Player::updateFacingBlock() {
@@ -35,8 +35,8 @@ void Player::updateFacingBlock() {
 void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
-    rotateOnUpGlobal(-inputs.mouseX / 4.5f);
-    rotateOnRightLocal(-inputs.mouseY / 4.5f);
+    rotateOnUpGlobal(-inputs.mouseX / 5.f);
+    rotateOnRightLocal(-inputs.mouseY / 5.f);
     inputs.mouseX = 0.f;
     inputs.mouseY = 0.f;
 
@@ -87,11 +87,24 @@ void Player::processInputs(InputBundle &inputs) {
             right = glm::normalize(right);
             m_acceleration -= right;
         }
-        if (inputs.spacePressed && m_velocity.y == 0.f) {
-            m_acceleration += glm::vec3(0.f, 80.f, 0.f);
-            inputs.spacePressed = false;
+
+        glm::vec3 playerBlockPos = glm::floor(m_position);
+        BlockType currentBlock = mcr_terrain.getGlobalBlockAt(playerBlockPos.x, playerBlockPos.y, playerBlockPos.z);
+
+        bool inFluid = (currentBlock == WATER || currentBlock == LAVA);
+        if (inFluid) {
+            if (inputs.spaceHold) {
+                m_acceleration.y = 15.f;
+            } else if (m_velocity.y > 0.f) {
+                m_velocity.y = 0.f;
+            }
+        } else {
+            if (inputs.spacePressed && m_velocity.y == 0.f) {
+                m_acceleration += glm::vec3(0.f, 80.f, 0.f);
+                inputs.spacePressed = false;
+            }
         }
-        m_acceleration *= 0.1;
+        m_acceleration *= 0.1f;
     }
 
     if (inputs.fPressed) {
@@ -100,60 +113,63 @@ void Player::processInputs(InputBundle &inputs) {
     }
 }
 
-void Player::computePhysics(float dT, const Terrain &terrain) {
+void Player::computePhysics(float dT, const Terrain &terrain, InputBundle &inputs) {
     // TODO: Update the Player's position based on its acceleration
     // and velocity, and also perform collision detection.
     m_velocity *= 0.9f;
-    m_velocity += m_acceleration * dT;
+
+    glm::vec3 playerBlockPos = glm::floor(m_position);
+    BlockType currentBlock = terrain.getGlobalBlockAt(playerBlockPos.x, playerBlockPos.y, playerBlockPos.z);
+
+    bool inFluid = (currentBlock == WATER || currentBlock == LAVA);
 
     if (!flightMode) {
-        m_velocity.y -= 0.3f * 9.81f * dT;
+        m_acceleration.y -= inFluid ? 0.05f * 9.81f : 0.3f * 9.81f;
+    }
+
+    m_velocity += m_acceleration * dT;
+
+    if (inFluid && !flightMode) {
+        m_velocity *= 2.f / 3.f;
     }
 
     glm::vec3 movement = m_velocity * 0.0001f * dT;
+
     if (flightMode) {
         moveAlongVector(movement * 1.2f);
         return;
     }
 
     glm::ivec3 blockHit;
-    float dist;
 
     glm::vec3 vertices[12] = {
-        glm::vec3(-0.5f, 0.0f, -0.5f), glm::vec3(0.5f, 0.0f, -0.5f),
-        glm::vec3(0.5f, 0.0f, 0.5f),  glm::vec3(-0.5f, 0.0f, 0.5f),
-        glm::vec3(-0.5f, 1.0f, -0.5f), glm::vec3(0.5f, 1.0f, -0.5f),
-        glm::vec3(0.5f, 1.0f, 0.5f),  glm::vec3(-0.5f, 1.0f, 0.5f),
-        glm::vec3(-0.5f, 2.0f, -0.5f), glm::vec3(0.5f, 2.0f, -0.5f),
-        glm::vec3(0.5f, 2.0f, 0.5f),  glm::vec3(-0.5f, 2.0f, 0.5f)
+        glm::vec3(-0.5f, 0.f, -0.5f), glm::vec3(0.5f, 0.f, -0.5f),
+        glm::vec3(0.5f, 0.f, 0.5f),  glm::vec3(-0.5f, 0.f, 0.5f),
+        glm::vec3(-0.5f, 1.f, -0.5f), glm::vec3(0.5f, 1.f, -0.5f),
+        glm::vec3(0.5f, 1.f, 0.5f),  glm::vec3(-0.5f, 1.f, 0.5f),
+        glm::vec3(-0.5f, 2.f, -0.5f), glm::vec3(0.5f, 2.f, -0.5f),
+        glm::vec3(0.5f, 2.f, 0.5f),  glm::vec3(-0.5f, 2.f, 0.5f)
     };
 
-    glm::vec3 axes[3] = {
-        glm::vec3(movement.x, 0, 0),
-        glm::vec3(0, movement.y, 0),
-        glm::vec3(0, 0, movement.z)
-    };
-
-    for (const auto& axisMovement : axes) {
-        bool hit = false;
-        for (const auto& vertex : vertices) {
-            glm::vec3 rayOrigin = m_position + vertex;
-            if (gridMarch(rayOrigin, axisMovement, terrain, &dist, &blockHit)) {
-                hit = true;
-                if (axisMovement.y != 0) {
-                    m_velocity.y = 0.f;
-                    movement.y = 0.f;
-                    if (glm::floor(m_position.y) != blockHit.y + 1) {
-                        moveUpGlobal(-1.f);
-                    }
+    for (glm::vec3 vertex : vertices) {
+        glm::vec3 rayOrigin = vertex + m_position;
+        for (int axis = 0; axis < 3; axis++) {
+            glm::vec3 rayDirection = glm::vec3(0);
+            rayDirection[axis] = movement[axis];
+            float outdist;
+            glm::ivec3 out_blockHit;
+            bool isBlocked = gridMarch(rayOrigin, rayDirection, mcr_terrain, &outdist, &out_blockHit);
+            if (isBlocked) {
+                if (outdist > 0.001f) {
+                    movement[axis] = glm::sign(movement[axis]) * (std::fmax(glm::min(glm::abs(movement[axis]), outdist) - 0.0001f, 0));
+                } else {
+                    movement[axis] = 0;
                 }
-                break;
+                m_velocity[axis] = 0;
             }
         }
-        if (!hit) {
-            moveAlongVector(axisMovement);
-        }
     }
+    moveAlongVector(movement);
 }
 
 bool Player::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, const Terrain &terrain, float *out_dist, glm::ivec3 *out_blockHit) {
@@ -189,7 +205,7 @@ bool Player::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, const Terrai
         offset[interfaceAxis] = glm::min(0.f, glm::sign(rayDirection[interfaceAxis]));
         currCell = glm::ivec3(glm::floor(rayOrigin)) + offset;
         BlockType cellType = terrain.getGlobalBlockAt(currCell.x, currCell.y, currCell.z);
-        if(cellType != EMPTY) {
+        if(cellType != EMPTY && cellType != WATER && cellType != LAVA) {
             *out_blockHit = currCell;
             *out_dist = glm::min(maxLen, curr_t);
             return true;

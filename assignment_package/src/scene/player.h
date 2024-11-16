@@ -14,7 +14,7 @@ private:
     OpenGLContext* mp_context;
 
     void processInputs(InputBundle &inputs);
-    void computePhysics(float dT, const Terrain &terrain);
+    void computePhysics(float dT, const Terrain &terrain, InputBundle &input);
 
     float pitch;
     const float maxPitch;
