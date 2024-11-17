@@ -212,6 +212,36 @@ void ShaderProgram::draw(Drawable &d) {
     context->printGLErrorLog();
 }
 
+void ShaderProgram::draw(Drawable &d, int textureSlot) {
+    if(d.elemCount(INDEX) < 0) {
+        throw std::invalid_argument(
+            "Attempting to draw a Drawable that has not initialized its count variable! Remember to set it to the length of your index array in create()."
+            );
+    }
+    useMe();
+
+    setUnifInt("u_Texture", textureSlot);
+
+    int handle;
+    if ((handle = m_attribs["vs_Pos"]) != -1 && d.bindBuffer(POSITION)) {
+        context->glEnableVertexAttribArray(handle);
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
+    }
+
+    if ((handle = m_attribs["vs_UV"]) != -1 && d.bindBuffer(UV)) {
+        context->glEnableVertexAttribArray(handle);
+        context->glVertexAttribPointer(handle, 2, GL_FLOAT, false, 0, nullptr);
+    }
+
+    d.bindBuffer(INDEX);
+    context->glDrawElements(d.drawMode(), d.elemCount(INDEX), GL_UNSIGNED_INT, 0);
+
+    if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
+    if (m_attribs["vs_UV"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_UV"]);
+
+    context->printGLErrorLog();
+}
+
 void ShaderProgram::drawInterleaved(Drawable &d, BufferType indexType) {
     if (d.elemCount(indexType) < 0) {
         throw std::invalid_argument(

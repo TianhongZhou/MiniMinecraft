@@ -47,6 +47,7 @@ public:
 
     // Draw the given object to our screen using this ShaderProgram's shaders
     void draw(Drawable &d);
+    void draw(Drawable &d, int textureSlot);
     void drawInstanced(InstancedDrawable &d);
     void drawInterleaved(Drawable &d, BufferType indexType);
     // Utility function used in create()

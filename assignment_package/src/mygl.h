@@ -13,6 +13,8 @@
 #include <smartpointerhelp.h>
 #include "scene/blocktypeworker.h"
 #include "scene/vboworker.h"
+#include "framebuffer.h"
+#include "scene/quad.h"
 
 
 class MyGL : public OpenGLContext
@@ -23,6 +25,7 @@ private:
     ShaderProgram m_progLambert;// A shader program that uses lambertian reflection
     ShaderProgram m_progFlat;// A shader program that uses "flat" reflection (no shadowing at all)
     ShaderProgram m_progInstanced;// A shader program that is designed to be compatible with instanced rendering
+    ShaderProgram m_progPost;
 
     GLuint vao; // A handle for our vertex array object. This will store the VBOs created in our geometry classes.
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
@@ -43,6 +46,9 @@ private:
     void sendPlayerDataToGUI() const;
     GLuint m_texture;
     float m_time;
+
+    FrameBuffer m_frameBuffer;
+    Quad m_quad;
 
 
 public:

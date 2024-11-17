@@ -1,7 +1,9 @@
+debug/framebuffer.o
 debug/main.o
 debug/mainwindow.o
 debug/mygl.o
 debug/blocktypeworker.o
+debug/quad.o
 debug/vboworker.o
 debug/shaderprogram.o
 debug/drawable.o

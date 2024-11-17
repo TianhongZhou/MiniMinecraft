@@ -1,7 +1,9 @@
+release/framebuffer.o
 release/main.o
 release/mainwindow.o
 release/mygl.o
 release/blocktypeworker.o
+release/quad.o
 release/vboworker.o
 release/shaderprogram.o
 release/drawable.o

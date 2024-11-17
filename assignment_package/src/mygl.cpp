@@ -12,9 +12,10 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this),
+      m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_progPost(this),
       m_terrain(this), m_player(glm::vec3(48.f, 180.f, 48.f), m_terrain), lastT(QDateTime::currentMSecsSinceEpoch()),
-      input(*mkU<InputBundle>()), m_time(0.f)
+      input(*mkU<InputBundle>()), m_time(0.f),
+      m_frameBuffer(this, width(), height(), devicePixelRatio()), m_quad(this)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -60,13 +61,14 @@ void MyGL::initializeGL()
 
     //Create the instance of the world axes
     m_worldAxes.createVBOdata();
+    m_quad.createVBOdata();
 
     // Create and set up the diffuse shader
     m_progLambert.create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
     m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
-
+    m_progPost.create(":/glsl/post.vert.glsl", ":/glsl/post.frag.glsl");
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
@@ -93,6 +95,9 @@ void MyGL::initializeGL()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
 
     m_progLambert.setSampler(0);
+
+    m_frameBuffer.create();
+    m_frameBuffer.bindFrameBuffer();
 }
 
 
@@ -107,6 +112,10 @@ void MyGL::resizeGL(int w, int h) {
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
+
+    m_frameBuffer.resize(width(), height(), devicePixelRatio());
+    m_frameBuffer.destroy();
+    m_frameBuffer.create();
 
     printGLErrorLog();
 }
@@ -177,6 +186,8 @@ void MyGL::sendPlayerDataToGUI() const {
 // MyGL's constructor links update() to a timer that fires 60 times per second,
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
+    m_frameBuffer.bindFrameBuffer();
+    glViewport(0, 0, width() * devicePixelRatio(), height() * devicePixelRatio());
     // Clear the screen so that we only see newly drawn images
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -186,12 +197,34 @@ void MyGL::paintGL() {
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
 
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_BACK);
+    glm::vec3 cameraPos = glm::floor(m_player.mcr_position + glm::vec3(0.f, 1.5f, 0.f));
+    BlockType current = m_terrain.getGlobalBlockAt(cameraPos);
+
+    if (current == WATER || current == LAVA) {
+        glDisable(GL_CULL_FACE);
+    } else {
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+    }
 
     m_progLambert.setUnifFloat("u_Time", m_time++);
 
     renderTerrain();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
+    glViewport(0, 0, width() * devicePixelRatio(), height() * devicePixelRatio());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    m_frameBuffer.bindToTextureSlot(1);
+
+    m_progPost.useMe();
+    if (current == WATER) {
+        m_progPost.setUnifInt("u_Water", 1);
+    } else if (current == LAVA) {
+        m_progPost.setUnifInt("u_Water", 0);
+    } else {
+        m_progPost.setUnifInt("u_Water", -1);
+    }
+    m_progPost.draw(m_quad, 1);
 
     glDisable(GL_DEPTH_TEST);
 

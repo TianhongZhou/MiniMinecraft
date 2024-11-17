@@ -17,3 +17,7 @@ It cannot change the block there to stone. Also, if I call the setGlobalBlockAt 
 2024.11.06 17:09 : Search for fractal noise on: https://devforum.roblox.com/t/creating-procedural-mountains-a-fractal-noise-tutorial/1494362
 
 Milestone2
+
+2024.11.15 03:32 : Find memory leak problem, chat with GPT for reasoning, and finally resolved without using GPT's suggestion.
+
+2024.11.17 17:09 : Use quad.cpp/quad.h from HW5, and looking for post process from HW5
