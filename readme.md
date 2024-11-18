@@ -1,5 +1,7 @@
 ## Milestone 1
 
+[M1 Video](https://youtu.be/yxLdMad_Vys)
+
 ### Procedural Terrain
 
 #### Implementation
@@ -45,6 +47,8 @@ Initially, the player was only blocked by walls two blocks high but could pass t
 After completing the milestone, I noticed the game was experiencing lag. The dT (delta time) values varied significantly, ranging from 100 to 600. When dT was large, it caused the player to "fly around" unexpectedly. For example, if the space bar was pressed at frame 0, the player's acceleration.y would increase. If a lag occurred before frame 1, dT could become quite large (e.g., 600), causing the player's velocity to be calculated as acceleration.y * 600, which was not intended. To address this, I clamped the dT values within a certain range to prevent extreme variations and maintain smoother gameplay.
 
 ## Milestone 2
+
+[M2 Video](https://youtu.be/z-IgxoBAQag)
 
 ### Cave Systems & Post-Process
 
