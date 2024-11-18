@@ -35,8 +35,8 @@ void Player::updateFacingBlock() {
 void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
-    rotateOnUpGlobal(-inputs.mouseX / 10.f);
-    rotateOnRightLocal(-inputs.mouseY / 10.f);
+    rotateOnUpGlobal(-inputs.mouseX / 50.f);
+    rotateOnRightLocal(-inputs.mouseY / 50.f);
     inputs.mouseX = 0.f;
     inputs.mouseY = 0.f;
 
@@ -133,7 +133,7 @@ void Player::computePhysics(float dT, const Terrain &terrain, InputBundle &input
         m_velocity *= 2.f / 3.f;
     }
 
-    glm::vec3 movement = m_velocity * 0.0001f * dT;
+    glm::vec3 movement = m_velocity * 0.000025f * dT;
 
     if (flightMode) {
         moveAlongVector(movement * 1.2f);

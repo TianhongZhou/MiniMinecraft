@@ -351,6 +351,12 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         if (m_player.showB) {
             m_player.showB = false;
             glm::vec3 block = m_player.facingBlock;
+            BlockType t = m_terrain.getGlobalBlockAt(block.x, block.y, block.z);
+
+            if (t == BEDROCK) {
+                return;
+            }
+
             m_terrain.setGlobalBlockAt(block.x, block.y, block.z, EMPTY);
         }
     } else if (e->button() == Qt::RightButton) {

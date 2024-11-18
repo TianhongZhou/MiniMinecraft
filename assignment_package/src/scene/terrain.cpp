@@ -178,6 +178,10 @@ glm::vec2 random2(glm::vec2 p) {
     return glm::fract(glm::sin(glm::vec2(glm::dot(p, glm::vec2(549.1, 874.2)), glm::dot(p, glm::vec2(764.1, 126.8)))) * 79871.465f);
 }
 
+glm::vec3 random3(glm::vec3 p) {
+    return glm::fract(glm::sin(glm::vec3(glm::dot(p, glm::vec3(465.1, 635.4, 767.3)), glm::dot(p, glm::vec3(165.4, 535.6, 418.7)), glm::dot(p, glm::vec3(912.1, 327.9, 298.1)))) * 18973.49f);
+}
+
 float surflet(glm::vec2 P, glm::vec2 gridPoint) {
     float distX = abs(P.x - gridPoint.x);
     float distY = abs(P.y - gridPoint.y);
@@ -197,6 +201,35 @@ float PerlinNoise(glm::vec2 uv) {
             surfletSum += surflet(uv, glm::floor(uv) + glm::vec2(dx, dy));
         }
     }
+    return surfletSum;
+}
+
+float surflet3D(glm::vec3 P, glm::vec3 gridPoint) {
+    float distX = abs(P.x - gridPoint.x);
+    float distY = abs(P.y - gridPoint.y);
+    float distZ = abs(P.z - gridPoint.z);
+
+    float tX = 1.f - 6.f * pow(distX, 5.f) + 15.f * pow(distX, 4.f) - 10.f * pow(distX, 3.f);
+    float tY = 1.f - 6.f * pow(distY, 5.f) + 15.f * pow(distY, 4.f) - 10.f * pow(distY, 3.f);
+    float tZ = 1.f - 6.f * pow(distZ, 5.f) + 15.f * pow(distZ, 4.f) - 10.f * pow(distZ, 3.f);
+
+    glm::vec3 gradient = 2.f * random3(gridPoint) - glm::vec3(1.f);
+    glm::vec3 diff = P - gridPoint;
+    float height = glm::dot(diff, gradient);
+    return height * tX * tY * tZ;
+}
+
+float PerlinNoise3D(glm::vec3 uvw) {
+    float surfletSum = 0.f;
+
+    for (int dx = 0; dx <= 1; dx++) {
+        for (int dy = 0; dy <= 1; dy++) {
+            for (int dz = 0; dz <= 1; dz++) {
+                surfletSum += surflet3D(uvw, glm::floor(uvw) + glm::vec3(dx, dy, dz));
+            }
+        }
+    }
+
     return surfletSum;
 }
 
@@ -274,17 +307,53 @@ void Terrain::generateBiome(int xMin, int zMin) {
     int waterLevel = 138;
     int snowLevel = 200;
 
+    int step = 4;
+    float noiseCache[17][17][33];
+
+    for (int x = 0; x <= 16; x += step) {
+        for (int z = 0; z <= 16; z += step) {
+            for (int y = 0; y <= baseHeight; y += step) {
+                noiseCache[x][z][y / step] = PerlinNoise3D(glm::vec3(xMin + x, y, zMin + z) / 30.f);
+            }
+        }
+    }
+
     for(int x = xMin; x < xMin + 16; x++) {
         for(int z = zMin; z < zMin + 16; z++) {
-            for (int y = baseHeight - 1; y <= baseHeight; y++) {
-                setGlobalBlockAt(x, y, z, STONE);
-            }
+            setGlobalBlockAt(x, 0, z, BEDROCK);
 
             // Commented out for other parts to run smoothly
             // Need to be uncommented for showing cave sys
-            // for (int y = 0; y <= baseHeight; y++) {
-            //     setGlobalBlockAt(x, y, z, STONE);
+            // for (int y = 1; y <= baseHeight; y++) {
+            //     int x0 = (x - xMin) / step * step;
+            //     int x1 = x0 + step;
+            //     int z0 = (z - zMin) / step * step;
+            //     int z1 = z0 + step;
+            //     int y0 = y / step * step;
+            //     int y1 = y0 + step;
+
+            //     float wx = float(x - xMin - x0) / step;
+            //     float wz = float(z - zMin - z0) / step;
+            //     float wy = float(y - y0) / step;
+
+            //     float c00 = glm::mix(noiseCache[x0][z0][y0 / step], noiseCache[x1][z0][y0 / step], wx);
+            //     float c01 = glm::mix(noiseCache[x0][z0][y1 / step], noiseCache[x1][z0][y1 / step], wx);
+            //     float c10 = glm::mix(noiseCache[x0][z1][y0 / step], noiseCache[x1][z1][y0 / step], wx);
+            //     float c11 = glm::mix(noiseCache[x0][z1][y1 / step], noiseCache[x1][z1][y1 / step], wx);
+
+            //     float c0 = glm::mix(c00, c10, wz);
+            //     float c1 = glm::mix(c01, c11, wz);
+            //     float cave = glm::mix(c0, c1, wy);
+
+            //     if (cave < 0) {
+            //         setGlobalBlockAt(x, y, z, (24 <= y && y < 25) ? LAVA : EMPTY);
+            //     } else {
+            //         setGlobalBlockAt(x, y, z, STONE);
+            //     }
             // }
+
+            setGlobalBlockAt(x, baseHeight - 1, z, STONE);
+            setGlobalBlockAt(x, baseHeight, z, STONE);
 
             int mountainHeight = calculateMountainHeight(x, z);
             int grasslandHeight = calculateGrasslandHeight(x, z);

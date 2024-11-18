@@ -46,6 +46,34 @@ After completing the milestone, I noticed the game was experiencing lag. The dT 
 
 ## Milestone 2
 
+### Cave Systems & Post-Process
+
+#### Implementation
+
+##### FOR CAVE SYSTEM, NEED TO UNCOMMENT LINE 327 TO 353 IN TERRAIN.CPP AND BETTER TO COMMENT LINE 358 TO 384 FOR SMOOTH TEST
+
+For the cave generation, I used 3D Perlin Noise to determine whether a block should be empty or solid stone. The noise value is calculated using the position of every block below the base ground level. If the noise value is negative, the block at the sampled coordinate is marked as empty; otherwise, it becomes a stone block. To create more intricate cave structures, I adjusted the coordinates by dividing them by 30, effectively increasing the frequency of the caves.
+
+I implemented a post-processing rendering pipeline by rendering the 3D scene to a framebuffer, then rendering the framebuffer's texture onto a screen-filling quadrilateral with a dedicated post-processing shader program. This shader program dynamically adjusts the scene's appearance based on environmental conditions. For instance, if the character's head is submerged in water or lava, the shader modifies the color of the scene: the blue channel (for water) or red channel (for lava) is set to 1.0, creating a visual tint that immerses the player in the respective environment.
+
+#### Difficulties
+
+One of the major challenges was the computational cost of applying 3D Perlin Noise to every coordinate below the base ground. This approach significantly impacted performance, making the game laggy and difficult to play.
+
+To address this, I implemented sparse sampling. Instead of calculating noise for every block, I sampled Perlin noise every 4 blocks and then used trilinear interpolation to estimate the noise values for the skipped blocks. This method greatly reduced the computational overhead, allowing new chunks to be generated smoothly without lag.
+
+### Texturing and Texture Animation
+
+#### Implementation
+
+I implemented a feature to load textures from image files into OpenGL. Textures were passed to the GPU and associated with a sampler2D in the fragment shader. Each block type in the world was mapped to a specific region in the texture atlas, using UV coordinates scaled to the 16x16 grid. In the `lambert.frag.glsl` shader, I integrated a sampler2D to apply texture colors to block surfaces. I added a time variable to the shader, allowing for UV animation specifically for LAVA and WATER blocks. I also passed a variable from main program to shader program to identify these block types and apply offsets to their UV coordinates, giving the illusion of flowing water and molten lava.
+
+In the `Chunk` class, I split interleaved VBO data into two separate buffers: 1. Opaque blocks, 2. Transparent blocks (e.g., WATER, ICE). This separation ensured proper rendering order, with all opaque blocks rendered first, followed by all transparent blocks. These changes are also applied to the multithreading part (`BlockTypeWorker`).
+
+#### Difficulties
+
+Initially, the textures of some faces on a block are assigned incorrectly, for example, up-side-down or rotated 90 degree. I changed the value in `adjacentF` in `Chunk.h` in order to rotate the face index and make the textures look correct.
+
 ### Multithreaded Terrain Generation
 
 #### Implementation
