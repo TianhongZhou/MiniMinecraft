@@ -60,6 +60,7 @@ public:
     QString qTextFileRead(const char*);
 
     void setSampler(GLuint sampler);
+    void setUnifSampler2D(std::string name, GLuint sampler);
 
 private:
     OpenGLContext* context;   // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,

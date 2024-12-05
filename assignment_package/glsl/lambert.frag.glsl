@@ -24,22 +24,30 @@ in vec4 fs_Col;
 in vec2 fs_UV;
 in float fs_IsAnimating;
 
+uniform vec3 u_FogColor;
+uniform float u_FogDensity;
+
 out vec4 out_Col; // This is the final output color that you will see on your
 // screen for the pixel that is currently being processed.
 
+uniform sampler2D shadowMap;
+in vec4 fragPosLightSpace;
+
+float ShadowCalculation(vec4 fragPosLightSpace) {
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    float currentDepth = projCoords.z;
+
+    float bias = 0.005;
+    float shadow = (currentDepth - bias) > closestDepth ? 0.5 : 1.0;
+
+    return shadow;
+}
+
 void main()
 {
-    // // Material base color (before shading)
-    // vec4 diffuseColor = fs_Col;
-
-    // // Add black lines between blocks (REMOVE WHEN YOU APPLY TEXTURES)
-    // bool xBound = fract(fs_Pos.x) < 0.0125 || fract(fs_Pos.x) > 0.9875;
-    // bool yBound = fract(fs_Pos.y) < 0.0125 || fract(fs_Pos.y) > 0.9875;
-    // bool zBound = fract(fs_Pos.z) < 0.0125 || fract(fs_Pos.z) > 0.9875;
-    // if((xBound && yBound) || (xBound && zBound) || (yBound && zBound)) {
-    //     diffuseColor.rgb = vec3(0,0,0);
-    // }
-
     vec2 uv = fs_UV;
 
     if (fs_IsAnimating > 0.5) {
@@ -58,6 +66,33 @@ void main()
     //to simulate ambient lighting. This ensures that faces that are not
     //lit by our point light are not completely black.
 
+    float distance = fs_Pos.z;
+
+    float startDistance = 65.0;
+    float endDistance = 120.0;
+
+    float fogFactor = 1.0;
+    if (distance > startDistance) {
+        if (distance < endDistance) {
+            fogFactor = 1.0 - (distance - startDistance) / (endDistance - startDistance);
+        } else {
+            fogFactor = 0.0;
+        }
+    }
+
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+    float shadow = ShadowCalculation(fragPosLightSpace);
+    vec3 litColor = diffuseColor.rgb * lightIntensity * shadow;
+    vec3 finalColor = mix(u_FogColor, litColor, fogFactor);
+
+    out_Col = vec4(finalColor, diffuseColor.a);
+
+    vec4 shadowColor = texture(shadowMap, fragPosLightSpace.xy);
+    out_Col = vec4(vec3(shadowColor.r), 1.0);
+
+    out_Col = vec4(finalColor * lightIntensity, diffuseColor.a);
+
     // Compute final shaded color
-    out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
+    // out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
 }

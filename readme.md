@@ -87,3 +87,19 @@ To reduce gameplay interruptions as terrain expands, I implemented multithreadin
 #### Difficulties
 
 Initially, race conditions occurred when multiple threads accessed shared vectors simultaneously, causing inconsistent data. Adding `std::mutex` locks around each shared data structure fixed this by ensuring only one thread could access the resource at a time, though it slightly increased processing overhead.
+
+## Milestone 3
+
+### Crosshair
+
+worldaxes.cpp
+
+### Distance fog
+
+lambert.frag.glsl: float distance to finalColor
+lambert.vert.glsl: calculate frag pos in camera space
+
+### Procedurally placed assets
+
+trees: terrain.cpp: generateBiomes
+

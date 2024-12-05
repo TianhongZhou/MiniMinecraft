@@ -174,6 +174,10 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
     }
 }
 
+float random1(glm::vec2 p) {
+    return glm::fract(glm::sin(glm::dot(p, glm::vec2(463.1, 587.8))) * 16543.786f);
+}
+
 glm::vec2 random2(glm::vec2 p) {
     return glm::fract(glm::sin(glm::vec2(glm::dot(p, glm::vec2(549.1, 874.2)), glm::dot(p, glm::vec2(764.1, 126.8)))) * 79871.465f);
 }
@@ -376,6 +380,26 @@ void Terrain::generateBiome(int xMin, int zMin) {
                 }
             }
 
+            if (x - xMin > 2 && xMin + 16 - x > 2 && z - zMin > 2 && zMin + 16 - z > 2) {
+                float rand = random1(glm::vec2(x, z));
+                if (rand > 0.992f && isGrassland && interpolatedHeight + baseHeight >= waterLevel) {
+                    float rand2 = random1(glm::vec2(z, x));
+                    int height = floor(rand2 * 3.f) + 4;
+                    for (int k = floor(rand2 * 2.f) + 1; k >= 0; k--) {
+                        for (int i = -k; i <= k; i++) {
+                            for (int j = -k; j <= k; j++) {
+                                if (getGlobalBlockAt(x + i, height + 1 - k + interpolatedHeight + baseHeight, z + j) == EMPTY) {
+                                    setGlobalBlockAt(x + i, height + 1 - k + interpolatedHeight + baseHeight, z + j, LEAF);
+                                }
+                            }
+                        }
+                    }
+
+                    for (int y = 1; y < height; y++) {
+                        setGlobalBlockAt(x, y + interpolatedHeight + baseHeight, z, WOOD);
+                    }
+                }
+            }
 
             if (interpolatedHeight + baseHeight < waterLevel) {
                 for (int y = interpolatedHeight + baseHeight; y < waterLevel; y++) {

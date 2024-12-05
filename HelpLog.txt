@@ -21,3 +21,5 @@ Milestone2
 2024.11.15 03:32 : Find memory leak problem, chat with GPT for reasoning, and finally resolved without using GPT's suggestion.
 
 2024.11.17 17:09 : Use quad.cpp/quad.h from HW5, and looking for post process from HW5
+
+Milestone3

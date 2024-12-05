@@ -15,7 +15,7 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER, SNOW, LAVA, BEDROCK
+    EMPTY, GRASS, DIRT, STONE, WATER, SNOW, LAVA, BEDROCK, WOOD, LEAF
 };
 
 // The six cardinal directions in 3D space
@@ -96,7 +96,9 @@ const static std::unordered_map<BlockType, glm::vec4, EnumHash> block2Color = {
     {WATER, glm::vec4(0.f, 0.f, 0.75f, 1.f)},
     {SNOW, glm::vec4(1.f, 1.f, 1.f, 1.f)},
     {LAVA, glm::vec4(1.f, 0.f, 0.f, 1.f)},
-    {BEDROCK, glm::vec4(0.f, 0.f, 0.f, 1.f)}
+    {BEDROCK, glm::vec4(0.f, 0.f, 0.f, 1.f)},
+    {WOOD, glm::vec4(1.f, 1.f, 0.f, 1.f)},
+    {LEAF, glm::vec4(0.f, 1.f, 0.f, 1.f)}
 };
 
 struct FaceUV {
@@ -217,6 +219,36 @@ const static std::unordered_map<BlockType, BlockUVData, EnumHash> blockUVs = {
                       glm::vec2(1.f / 16.f, 14.f / 16.f), glm::vec2(2.f / 16.f, 14.f / 16.f)
                   }
               }
+    },
+    {WOOD, BlockUVData{
+               {
+                   glm::vec2(5.f / 16.f, 15.f / 16.f), glm::vec2(6.f / 16.f, 15.f / 16.f),
+                   glm::vec2(5.f / 16.f, 14.f / 16.f), glm::vec2(6.f / 16.f, 14.f / 16.f)
+               },
+               {
+                   glm::vec2(5.f / 16.f, 15.f / 16.f), glm::vec2(6.f / 16.f, 15.f / 16.f),
+                   glm::vec2(5.f / 16.f, 14.f / 16.f), glm::vec2(6.f / 16.f, 14.f / 16.f)
+               },
+               {
+                   glm::vec2(4.f / 16.f, 15.f / 16.f), glm::vec2(5.f / 16.f, 15.f / 16.f),
+                   glm::vec2(4.f / 16.f, 14.f / 16.f), glm::vec2(5.f / 16.f, 14.f / 16.f)
+               }
+           }
+    },
+    {LEAF, BlockUVData{
+               {
+                   glm::vec2(4.f / 16.f, 13.f / 16.f), glm::vec2(5.f / 16.f, 13.f / 16.f),
+                   glm::vec2(4.f / 16.f, 12.f / 16.f), glm::vec2(5.f / 16.f, 12.f / 16.f)
+               },
+               {
+                   glm::vec2(4.f / 16.f, 13.f / 16.f), glm::vec2(5.f / 16.f, 13.f / 16.f),
+                   glm::vec2(4.f / 16.f, 12.f / 16.f), glm::vec2(5.f / 16.f, 12.f / 16.f)
+               },
+               {
+                   glm::vec2(4.f / 16.f, 13.f / 16.f), glm::vec2(5.f / 16.f, 13.f / 16.f),
+                   glm::vec2(4.f / 16.f, 12.f / 16.f), glm::vec2(5.f / 16.f, 12.f / 16.f)
+               }
+           }
     }
 };
 

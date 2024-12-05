@@ -15,7 +15,8 @@ MyGL::MyGL(QWidget *parent)
       m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_progPost(this),
       m_terrain(this), m_player(glm::vec3(48.f, 180.f, 48.f), m_terrain), lastT(QDateTime::currentMSecsSinceEpoch()),
       input(*mkU<InputBundle>()), m_time(0.f),
-      m_frameBuffer(this, width(), height(), devicePixelRatio()), m_quad(this)
+      m_frameBuffer(this, width(), height(), devicePixelRatio()), m_quad(this),
+      m_shadowMap(this, 1024, 1024, 1)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -94,10 +95,13 @@ void MyGL::initializeGL()
     img = (img.convertToFormat(QImage::Format_RGBA8888)).mirrored();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
 
-    m_progLambert.setSampler(0);
+    m_progLambert.setUnifSampler2D("u_Texture", 0);
 
     m_frameBuffer.create();
     m_frameBuffer.bindFrameBuffer();
+
+    m_progLambert.setUnifVec3("u_FogColor", glm::vec3(0.8f, 0.8f, 0.8f));
+    m_progLambert.setUnifFloat("u_FogDensity", 0.01f);
 }
 
 
@@ -109,6 +113,7 @@ void MyGL::resizeGL(int w, int h) {
 
     // Upload the view-projection matrix to our shaders (i.e. onto the graphics card)
 
+    m_progLambert.setUnifMat4("u_View", m_player.mcr_camera.getView());
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
@@ -186,6 +191,20 @@ void MyGL::sendPlayerDataToGUI() const {
 // MyGL's constructor links update() to a timer that fires 60 times per second,
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
+    glm::vec3 lightTarget = glm::vec3(48.f, 0.f, 48.f);
+    glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, -1.f, -0.75f));
+    glm::vec3 lightPos = lightTarget - lightDir * 300.f;
+
+    float sceneSize = 20.f;
+    glm::mat4 lightProjection = glm::ortho(-sceneSize, sceneSize, -sceneSize, sceneSize, 1.0f, 500.f);
+    glm::mat4 lightView = glm::lookAt(lightPos, lightTarget, glm::vec3(0.f, 1.f, 0.f));
+    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+    m_progFlat.setUnifMat4("u_LightSpaceMatrix", lightSpaceMatrix);
+
+    m_progFlat.useMe();
+    renderTerrain(m_progFlat);
+
     m_frameBuffer.bindFrameBuffer();
     glViewport(0, 0, width() * devicePixelRatio(), height() * devicePixelRatio());
     // Clear the screen so that we only see newly drawn images
@@ -196,6 +215,8 @@ void MyGL::paintGL() {
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
+    m_progLambert.setUnifMat4("u_LightSpaceMatrix", lightSpaceMatrix);
+    m_progLambert.setUnifVec3("u_LightDir", -lightDir);
 
     glm::vec3 cameraPos = glm::floor(m_player.mcr_position + glm::vec3(0.f, 1.5f, 0.f));
     BlockType current = m_terrain.getGlobalBlockAt(cameraPos);
@@ -209,7 +230,11 @@ void MyGL::paintGL() {
 
     m_progLambert.setUnifFloat("u_Time", m_time++);
 
-    renderTerrain();
+    m_progLambert.useMe();
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+    glActiveTexture(GL_TEXTURE0);
+
+    renderTerrain(m_progLambert);
 
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
     glViewport(0, 0, width() * devicePixelRatio(), height() * devicePixelRatio());
@@ -240,16 +265,13 @@ void MyGL::paintGL() {
 // TODO: Change this so it renders the nine zones of generated
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
-void MyGL::renderTerrain() {
-    glBindTexture(GL_TEXTURE_2D, m_texture);
-    glActiveTexture(GL_TEXTURE0);
-
+void MyGL::renderTerrain(ShaderProgram shader) {
     glm::vec3 currPos = m_player.mcr_position;
     int currX = glm::floor(currPos.x / 16.f);
     int currZ = glm::floor(currPos.z / 16.f);
     int x = 16 * currX;
     int z = 16 * currZ;
-    m_terrain.draw(x - 64, x + 64, z - 64, z + 64, &m_progLambert);
+    m_terrain.draw(x - 96, x + 97, z - 96, z + 97, &shader);
 }
 
 

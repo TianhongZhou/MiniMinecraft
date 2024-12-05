@@ -410,3 +410,9 @@ void ShaderProgram::setSampler(GLuint sampler) {
     context->glActiveTexture(GL_TEXTURE0 + sampler);
     setUnifInt("u_Texture", sampler);
 }
+
+void ShaderProgram::setUnifSampler2D(std::string name, GLuint sampler) {
+    useMe();
+    context->glActiveTexture(GL_TEXTURE0 + sampler);
+    setUnifInt(name, sampler);
+}

@@ -50,6 +50,11 @@ private:
     FrameBuffer m_frameBuffer;
     Quad m_quad;
 
+    FrameBuffer m_shadowMap;
+
+    GLuint shadowFBO;
+    GLuint shadowMap;
+
 
 public:
     explicit MyGL(QWidget *parent = nullptr);
@@ -68,7 +73,7 @@ public:
 
     // Called from paintGL().
     // Calls Terrain::draw().
-    void renderTerrain();
+    void renderTerrain(ShaderProgram shader);
 
 protected:
     // Automatically invoked when the user
