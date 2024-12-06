@@ -90,6 +90,8 @@ Initially, race conditions occurred when multiple threads accessed shared vector
 
 ## Milestone 3
 
+[M3 Video](https://youtu.be/76oGmXU-TCg)
+
 ### Crosshair
 
 #### Implementation
