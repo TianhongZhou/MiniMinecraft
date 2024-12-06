@@ -15,8 +15,7 @@ MyGL::MyGL(QWidget *parent)
       m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_progPost(this),
       m_terrain(this), m_player(glm::vec3(48.f, 180.f, 48.f), m_terrain), lastT(QDateTime::currentMSecsSinceEpoch()),
       input(*mkU<InputBundle>()), m_time(0.f),
-      m_frameBuffer(this, width(), height(), devicePixelRatio()), m_quad(this),
-      m_shadowMap(this, 1024, 1024, 1)
+      m_frameBuffer(this, width(), height(), devicePixelRatio()), m_quad(this)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -191,19 +190,7 @@ void MyGL::sendPlayerDataToGUI() const {
 // MyGL's constructor links update() to a timer that fires 60 times per second,
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
-    glm::vec3 lightTarget = glm::vec3(48.f, 0.f, 48.f);
     glm::vec3 lightDir = glm::normalize(glm::vec3(-0.5f, -1.f, -0.75f));
-    glm::vec3 lightPos = lightTarget - lightDir * 300.f;
-
-    float sceneSize = 20.f;
-    glm::mat4 lightProjection = glm::ortho(-sceneSize, sceneSize, -sceneSize, sceneSize, 1.0f, 500.f);
-    glm::mat4 lightView = glm::lookAt(lightPos, lightTarget, glm::vec3(0.f, 1.f, 0.f));
-    glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-
-    m_progFlat.setUnifMat4("u_LightSpaceMatrix", lightSpaceMatrix);
-
-    m_progFlat.useMe();
-    renderTerrain(m_progFlat);
 
     m_frameBuffer.bindFrameBuffer();
     glViewport(0, 0, width() * devicePixelRatio(), height() * devicePixelRatio());
@@ -215,8 +202,8 @@ void MyGL::paintGL() {
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
-    m_progLambert.setUnifMat4("u_LightSpaceMatrix", lightSpaceMatrix);
     m_progLambert.setUnifVec3("u_LightDir", -lightDir);
+    m_progLambert.setUnifVec3("u_Cam", m_player.mcr_camera.mcr_position);
 
     glm::vec3 cameraPos = glm::floor(m_player.mcr_position + glm::vec3(0.f, 1.5f, 0.f));
     BlockType current = m_terrain.getGlobalBlockAt(cameraPos);
@@ -242,6 +229,8 @@ void MyGL::paintGL() {
     m_frameBuffer.bindToTextureSlot(1);
 
     m_progPost.useMe();
+    m_progPost.setUnifFloat("u_Time", m_time);
+    m_progPost.setUnifVec2("u_Resolution", glm::vec2(width(), height()));
     if (current == WATER) {
         m_progPost.setUnifInt("u_Water", 1);
     } else if (current == LAVA) {

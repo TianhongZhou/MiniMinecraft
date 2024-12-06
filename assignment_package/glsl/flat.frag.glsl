@@ -4,7 +4,6 @@
 // Refer to the lambert shader files for useful comments
 
 in vec4 fs_Col;
-in vec4 fragPosLightSpace;
 
 out vec4 out_Col;
 

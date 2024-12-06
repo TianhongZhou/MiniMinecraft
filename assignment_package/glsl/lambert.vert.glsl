@@ -30,6 +30,7 @@ in vec4 vs_Nor;             // The array of vertex normals passed to the shader
 in vec4 vs_Col;             // The array of vertex colors passed to the shader.
 
 in vec4 vs_UV;
+uniform float u_Time;
 
 out vec4 fs_Pos;
 out vec4 fs_Nor;            // The array of normals that has been transformed by u_ModelInvTr. This is implicitly passed to the fragment shader.
@@ -38,30 +39,44 @@ out vec4 fs_Col;            // The color of each vertex. This is implicitly pass
 out vec2 fs_UV;
 out float fs_IsAnimating;
 
+out vec3 fs_DistortedNor;
+out vec3 fs_worldPos;
+
 uniform vec3 u_LightDir;  // The direction of our virtual light, which is used to compute the shading of
                                         // the geometry in the fragment shader.
 
-uniform mat4 u_LightSpaceMatrix;
-out vec4 fragPosLightSpace;
-
 void main()
 {
-    // fs_Pos = vs_Pos;
     fs_Col = vs_Col;                         // Pass the vertex colors to the fragment shader for interpolation
     fs_UV = vs_UV.xy;
     fs_IsAnimating = vs_UV.z;
 
-    fragPosLightSpace = u_LightSpaceMatrix * vs_Pos;
-
     mat3 invTranspose = mat3(u_ModelInvTr);
     fs_Nor = vs_Nor;
 
-    vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
+    float vs_y = vs_Pos.y;
+    vec3 displacedPos = vec3(vs_Pos.x, vs_y, vs_Pos.z);
+    vec3 distortedNor = vec3(vs_Nor);
 
+    if (fs_IsAnimating > 0.5) {
+        float wave = sin(u_Time * 0.5 + vs_Pos.x * 1.0 + vs_Pos.z * 1.0);
+        vs_y += wave * 0.5;
+
+        float wavePhase = u_Time * 0.5 + vs_Pos.x * 1.0 + vs_Pos.z * 1.0;
+        float dfdx = 0.5 * cos(wavePhase);
+        float dfdz = 0.5 * cos(wavePhase);
+
+        vec3 waveGradient = vec3(-dfdx, 1.0, -dfdz);
+        distortedNor = normalize(waveGradient);
+    }
+
+    displacedPos.y = vs_y;
+    fs_DistortedNor = distortedNor;
+
+    vec4 modelposition = u_Model * vec4(vs_Pos.x, vs_y, vs_Pos.z, 1.0);   // Temporarily store the transformed vertex positions for use below
+    fs_worldPos = modelposition.xyz;
     fs_LightVec = normalize(vec4(u_LightDir, 0.0));  // Compute the direction in which the light source lies
-
     fs_Pos = u_ViewProj * modelposition;
-
     gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
                                              // used to render the final positions of the geometry's vertices
 }

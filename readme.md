@@ -103,3 +103,10 @@ lambert.vert.glsl: calculate frag pos in camera space
 
 trees: terrain.cpp: generateBiomes
 
+### Water waves
+
+lambert.vert.glsl
+
+### Post-process Camera Overlay
+
+post.frag.glsl

@@ -23,6 +23,10 @@ in vec4 fs_LightVec;
 in vec4 fs_Col;
 in vec2 fs_UV;
 in float fs_IsAnimating;
+in vec3 fs_DistortedNor;
+in vec3 fs_worldPos;
+
+uniform vec3 u_Cam;
 
 uniform vec3 u_FogColor;
 uniform float u_FogDensity;
@@ -30,41 +34,33 @@ uniform float u_FogDensity;
 out vec4 out_Col; // This is the final output color that you will see on your
 // screen for the pixel that is currently being processed.
 
-uniform sampler2D shadowMap;
-in vec4 fragPosLightSpace;
-
-float ShadowCalculation(vec4 fragPosLightSpace) {
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5;
-
-    float closestDepth = texture(shadowMap, projCoords.xy).r;
-    float currentDepth = projCoords.z;
-
-    float bias = 0.005;
-    float shadow = (currentDepth - bias) > closestDepth ? 0.5 : 1.0;
-
-    return shadow;
-}
-
 void main()
 {
     vec2 uv = fs_UV;
 
+    vec3 normal = normalize(fs_Nor.rgb);
     if (fs_IsAnimating > 0.5) {
         float speed = 80.0;
         uv.x += mod(u_Time, speed / 16.0) / speed;
+        normal = normalize(fs_DistortedNor);
     }
-    vec4 diffuseColor = texture(u_Texture, uv);
 
-    // Calculate the diffuse term for Lambert shading
-    float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
-    // Avoid negative lighting values
-    diffuseTerm = clamp(diffuseTerm, 0, 1);
+    vec3 L = normalize(vec3(fs_LightVec));
+    vec3 V = normalize(u_Cam - fs_worldPos);
 
-    float ambientTerm = 0.2;
-    float lightIntensity = diffuseTerm + ambientTerm;   //Add a small float value to the color multiplier
-    //to simulate ambient lighting. This ensures that faces that are not
-    //lit by our point light are not completely black.
+    vec3 H = normalize(L + V);
+    float diffuseTerm = max(dot(normal, L), 0.0);
+    float specularTerm = pow(max(dot(normal, H), 0.0), 32.0);
+
+    vec3 ambient = vec3(0.2);
+    vec3 diffuse = vec3(1.0) * diffuseTerm;
+    vec3 specular = vec3(1.0) * specularTerm;
+
+    if (fs_IsAnimating <= 0.5) {
+        specular = vec3(0.0);
+    }
+
+    vec3 lightIntensity = ambient + diffuse + specular;
 
     float distance = fs_Pos.z;
 
@@ -82,14 +78,9 @@ void main()
 
     fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-    float shadow = ShadowCalculation(fragPosLightSpace);
-    vec3 litColor = diffuseColor.rgb * lightIntensity * shadow;
-    vec3 finalColor = mix(u_FogColor, litColor, fogFactor);
 
-    out_Col = vec4(finalColor, diffuseColor.a);
-
-    vec4 shadowColor = texture(shadowMap, fragPosLightSpace.xy);
-    out_Col = vec4(vec3(shadowColor.r), 1.0);
+    vec4 diffuseColor = texture(u_Texture, uv);
+    vec3 finalColor = mix(u_FogColor, diffuseColor.rgb, fogFactor);
 
     out_Col = vec4(finalColor * lightIntensity, diffuseColor.a);
 

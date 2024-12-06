@@ -50,9 +50,7 @@ private:
     FrameBuffer m_frameBuffer;
     Quad m_quad;
 
-    FrameBuffer m_shadowMap;
-
-    GLuint shadowFBO;
+    GLuint depthTexture;
     GLuint shadowMap;
 
 
