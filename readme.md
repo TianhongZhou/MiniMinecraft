@@ -92,21 +92,36 @@ Initially, race conditions occurred when multiple threads accessed shared vector
 
 ### Crosshair
 
-worldaxes.cpp
+#### Implementation
+
+Implemented based on given file `worldaxes.cpp`, the crosshair is implemented by creating a small, plus-shaped set of lines at the screen center. First, I set up two line segments—one horizontal and one vertical—using a handful of vertices and uniform white color. These vertices are stored in GPU buffers (position, color, index) just like the axes. In the vertex and fragment shaders, no special transformations or texturing are required; the crosshair simply renders in normalized device coordinates over the scene. By using `GL_LINES` to draw these segments, the crosshair remains minimal, ensuring that it does not obscure gameplay elements, yet provides a stable visual reference for aiming and navigation.
 
 ### Distance fog
 
-lambert.frag.glsl: float distance to finalColor
-lambert.vert.glsl: calculate frag pos in camera space
+#### Implementation
+
+First, I calculated the fragment position in camera space in `lambert.vert.glsl` and then pass it to the fragment shader. Using the fragment position `fs_Pos.z` in `lambert.frag.glsl` as a measure of distance from the camera, I defined a linear fog gradient that starts at a specified distance and fully envelops the scene by `endDistance`. In the fragment shader, a `fogFactor` is computed based on how far the fragment is from the camera. If the fragment's distance is below `startDistance`, no fog is applied. Between `startDistance` and `endDistance`, the fog gradually intensifies, blending the fragment's color with a specified `u_FogColor`. Past `endDistance`, the fog completely obscures the fragment. By mixing `u_FogColor` with the sampled diffuse texture color, this approach smoothly fades distant objects into the chosen atmospheric color, producing a natural sense of scale and immersion without abruptly cutting off the scene at a fixed rendering distance.
 
 ### Procedurally placed assets
 
-trees: terrain.cpp: generateBiomes
+#### Implementation
+
+To add variety and interest to the generated terrain, I introduced procedural asset placement. In this snippet, I target suitable areas—well within a 16x16 chunk’s bounds and above the water level—and occasionally place a tree. Using `random1()` in `terrain.cpp` to determine both the probability of spawning and the size of the tree, I generate a trunk made of WOOD blocks and a leaf canopy of LEAF blocks placed around its top. The randomization of height and leaf radius ensures that each tree is unique, lending the biome a more natural, organic feel.
 
 ### Water waves
 
-lambert.vert.glsl
+#### Implementation
+
+To simulate gentle rippling water, I introduced a time-based sinusoidal displacement in the vertex shader in the lambert shaders. Each water vertex's y-position is offset using `sin(u_Time + vs_Pos.x + vs_Pos.z)`, producing subtle up-and-down motion. After adjusting vertex positions, I recalculate the normals on-the-fly by considering the derivatives of the wave function. This ensures that the surface's lighting remains correct as the geometry deforms.
+
+In the fragment shader, if the surface is animating (e.g., a water block), I apply a time-driven UV offset to simulate flowing textures. I also re-enable the specular component of the lighting model for these animated surfaces. With this combination, the water both moves and shimmers, catching highlights in a realistic way. The end result is a dynamic, reflective body of water that integrates seamlessly into the environment, adding visual richness and depth.
+
+#### Difficulties
+
+In order to make the specular term more realistic, the `distortedNormal` should be matched with the wave shape. For this purpose, I calculated the gradient of the wave function `sin(u_Time + vs_Pos.x + vs_Pos.z)`, which is equal to (-df/dx, 1, -df/dz) using partial derivative. After calculating the actual gradient and applying it to the normal, the specular matched with the wave's shape.
 
 ### Post-process Camera Overlay
 
-post.frag.glsl
+#### Implementation
+
+Inside the `if (intensity > 0.0)` block of post processing shader, I apply noise-based UV perturbation and wave deformation to simulate underwater distortion. First, I scale the uv coordinates by the screen resolution to create a more pronounced effect. Using the `noise()` function, I sample two noise values that shift uv along both the x and y axes, introducing random wavy patterns. Next, I add sinusoidal and cosine functions dependent on time and position, causing gentle ripple-like oscillations. These combined transformations produce fluid, dynamic distortions reminiscent of looking through moving water, enhancing immersion when the player is submerged.

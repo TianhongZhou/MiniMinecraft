@@ -260,7 +260,7 @@ void MyGL::renderTerrain(ShaderProgram shader) {
     int currZ = glm::floor(currPos.z / 16.f);
     int x = 16 * currX;
     int z = 16 * currZ;
-    m_terrain.draw(x - 96, x + 97, z - 96, z + 97, &shader);
+    m_terrain.draw(x - 80, x + 80, z - 80, z + 80, &shader);
 }
 
 
